@@ -1,5 +1,7 @@
 import socket
 import pygame
+from ClientGuiUtils import create_gui
+import ClientCalcUtils
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -7,101 +9,6 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
-BOARD_SIZE = 10
-BOARD_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-
-
-def check_rectangle_pressed(rectangles, position):
-    for rectangle in rectangles:
-        if rectangle.collidepoint(position):
-            return rectangles.index(rectangle)
-
-
-def draw_rec_grid(screen, color, left, top, width, height):
-    """
-    create a single rectangle as a part of the grid
-    :param screen: the screen into the rectangle is draw
-    :param color: color fill of the rectangle
-    :param left: left point of the rectangle on screen
-    :param top: top point of the rectangle on screen
-    :param width: width of the rectangle
-    :param height: height of the rectangle
-    :return: a rectangle bounding the changed pixels
-    """
-    return pygame.draw.rect(screen, color, [left, top, width, height])
-
-
-def draw_text(screen, text, color, left, top, font_size):
-    """
-    draw a text to describe the grid
-    :param screen: the screen into the title is draw
-    :param text: the text in the title
-    :param color: color of the title
-    :param left: width of the rectangle in which the title will appear
-    :param top: height of the rectangle in which the title will appear
-    :param font_size: size of text
-    :return: void
-    """
-    font = pygame.font.Font('freesansbold.ttf', font_size)
-    text = font.render(text, True, color)
-    text_rect = text.get_rect()
-    text_rect.left = left
-    text_rect.top = top
-    screen.blit(text, text_rect)
-
-
-def draw_grids(screen, grid_from_server, no_ship_color, ship_color, margin, width, height, background,
-               my_rectangles, opponent_rectangles):
-    """
-    draw a grid that represent a playing board
-    :param screen: the screen into the board is draw
-    :param grid_from_server: ships location generated from the server
-    :param no_ship_color: color to fill no ship rectangle
-    :param ship_color: color to fill ship rectangle
-    :param margin: space between rectangles on the board
-    :param width: width of each rectangle on the board
-    :param height: height of each rectangle on the board
-    :param background: background color
-    :param opponent_rectangles: empty list of all rectangles of opponent board
-    :param my_rectangles: empty list of all rectangles of my board
-    :return:
-    """
-    for row in range(BOARD_SIZE + 1):
-        for column in range(BOARD_SIZE + 1):
-            # color
-            color = no_ship_color
-            if grid_from_server[row][column] == 1:
-                color = ship_color
-            elif column == 0 or row == 0:
-                color = background
-
-            # direction
-            left = (margin + width) * column + margin
-            top = (margin + height) * row + margin
-
-            my_rectangles.append(draw_rec_grid(screen, color, left, top, width, height))
-
-            # Opponent color
-            if column == 0 or row == 0:
-                opponent_color = background
-            else:
-                opponent_color = no_ship_color
-
-            # Opponent direction
-            opponent_left = 11 * (margin + width) + left + 100
-
-            opponent_rectangles.append(draw_rec_grid(screen, opponent_color, opponent_left, top, width, height))
-
-            # draw indicators
-            if column == 0 and row != 0:
-                draw_text(screen, str(row), no_ship_color, left, top, 22)
-                draw_text(screen, str(row), no_ship_color, opponent_left, top, 22)
-            if row == 0 and column != 0:
-                draw_text(screen, BOARD_LETTERS[column - 1], no_ship_color, left, top, 22)
-                draw_text(screen, BOARD_LETTERS[column - 1], no_ship_color, opponent_left, top, 22)
-
-    draw_text(screen, "My Grid", ship_color, left - 6 * width, top + height + 10, 32)
-    draw_text(screen, "Opponent Grid", no_ship_color, opponent_left - 7 * width, top + height + 10, 32)
 
 
 class Client:
@@ -129,8 +36,8 @@ class Client:
             grid.append([])
             for column in range(11):
                 grid[row].append(0)
-        grid[1][5] = 1
-        grid[1][6] = 1
+        grid[4][5] = 1
+        grid[4][6] = 1
         return grid
 
     def send(self, msg):
@@ -153,30 +60,7 @@ class Client:
         :param grid_from_server: ships location generated from the server
         :return: void
         """
-        black = (0, 0, 0)
-        white = (255, 255, 255)
-        blue = (0, 0, 255)
-        WIDTH = 40
-        HEIGHT = 40
-        MARGIN = 3
-        x = (WIDTH + 2 * MARGIN) * 12 * 2
-        y = (HEIGHT + MARGIN) * 11 + 100
-
-        pygame.init()
-
-        # Set up the drawing window
-        screen = pygame.display.set_mode([x, y])
-        pygame.display.set_caption("Battleships")
-
-        # Fill the background with white
-        screen.fill(black)
-
-        # Draw
-        draw_grids(screen, grid_from_server, white, blue, MARGIN, WIDTH, HEIGHT, black,
-                   self.my_rectangles, self.opponent_rectangles)
-
-        # Flip the display
-        pygame.display.flip()
+        create_gui(grid_from_server, self.my_rectangles, self.opponent_rectangles)
 
     def handle_game(self):
         done = False
@@ -186,8 +70,8 @@ class Client:
                     done = True
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # mouse left button pressed
                     pos = pygame.mouse.get_pos()
-                    index_1d = check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
-                    print(index_1d)
+                    x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
+                    print(x, y)
 
         pygame.quit()
         self.send(DISCONNECT_MESSAGE)
