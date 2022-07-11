@@ -30,7 +30,7 @@ class Client:
         :return: grid to create the board
         """
         self.socket.connect(ADDRESS)
-        # wait for server to give battleships locations
+        # TODO : get grid from server (2d int)
         grid = []
         for row in range(11):
             grid.append([])
@@ -65,6 +65,11 @@ class Client:
     def handle_game(self):
         done = False
         while not done:
+            # TODO : get message from server to make a move
+            # TODO : get message from server to check opponent move
+            # TODO : get message from server to get hit or miss
+            # TODO : get message for win
+            # TODO : get message for loose
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
@@ -72,6 +77,8 @@ class Client:
                     pos = pygame.mouse.get_pos()
                     x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
                     print(x, y)
+                    if x is not None and y is not None:
+                        self.send("TRY HIT " + str(x) + " " + str(y))
 
         pygame.quit()
         self.send(DISCONNECT_MESSAGE)
