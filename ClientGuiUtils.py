@@ -70,8 +70,6 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
 def draw_headlines(screen, left, opponent_left, top):
     draw_text(screen, "My Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
     draw_text(screen, "Opponent Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
-    # # draw_text(screen, "Waiting for Opponent", BLACK, opponent_left - 8.5 * RECTANGLE_WIDTH,
-        # #      top - 5 * RECTANGLE_HEIGHT, 32)
 
 
 def calc_fill_rectangle(grid_array, row, column):
