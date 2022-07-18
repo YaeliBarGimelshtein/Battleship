@@ -65,11 +65,14 @@ class Client:
         gets messages from the server and returns them
         :return: string message
         """
-        msg_lenght = self.socket.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
-        if msg_lenght:  # check not none
+        #msg_lenght = self.socket.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
+        #if msg_lenght:  # check not none
+        for i in range(10): ####NEED TO CHANGE THIS LATER
+            msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
             msg_lenght = int(msg_lenght)
             msg = self.socket.recv(msg_lenght).decode(FORMAT)
-            print(list(msg))
+            values = ''.join(msg)
+            print(values)
 
     def gui(self, grid_from_server):
         """
