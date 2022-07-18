@@ -1,3 +1,5 @@
+from itertools import cycle
+
 import pygame
 
 BOARD_SIZE = 10
@@ -11,6 +13,7 @@ RECTANGLE_HEIGHT = 40
 RECTANGLE_MARGIN = 3
 FONT_SIZE = 22
 HEADLINE_SIZE = 32
+BLINK_EVENT = pygame.USEREVENT + 0
 
 
 def draw_rec_grid(screen, color, left, top):
@@ -20,11 +23,17 @@ def draw_rec_grid(screen, color, left, top):
     :param color: color fill of the rectangle
     :param left: left point of the rectangle on screen
     :param top: top point of the rectangle on screen
-    :param width: width of the rectangle
-    :param height: height of the rectangle
     :return: a rectangle bounding the changed pixels
     """
     return pygame.draw.rect(screen, color, [left, top, RECTANGLE_WIDTH, RECTANGLE_HEIGHT])
+
+
+def draw_blink_rect(screen, color, left, top, text):
+    font = pygame.font.Font('freesansbold.ttf', HEADLINE_SIZE)
+    text = font.render(text, True, color)
+    text_rect_size_height = text.get_rect().height
+    text_rect_size_width = text.get_rect().width
+    return pygame.draw.rect(screen, color,  [left, top, text_rect_size_width, text_rect_size_height])
 
 
 def draw_text(screen, text, color, left, top, font_size):
@@ -61,6 +70,8 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
 def draw_headlines(screen, left, opponent_left, top):
     draw_text(screen, "My Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
     draw_text(screen, "Opponent Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+    # # draw_text(screen, "Waiting for Opponent", BLACK, opponent_left - 8.5 * RECTANGLE_WIDTH,
+        # #      top - 5 * RECTANGLE_HEIGHT, 32)
 
 
 def calc_fill_rectangle(grid_array, row, column):
@@ -156,3 +167,4 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles):
 
     # Flip the display
     pygame.display.flip()
+    return screen
