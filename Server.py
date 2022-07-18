@@ -1,7 +1,7 @@
 import socket
 import threading
 import random
-
+import numpy as np
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
@@ -53,14 +53,14 @@ class Server():
                 if msg == DISCONNECT_MESSAGE:
                     connected = False
                 elif msg == GET_BOARD_MESSAGE:
-                    msg_to_send = self.create_battleground()
+                    msg_to_send = np.array(self.create_battleground()).tobytes()
                     msg_lenght = len(msg_to_send)
                     send_lenght = str(msg_lenght).encode(FORMAT)
                     send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
                     port.send(send_lenght)  # send header
                     port.send(msg_to_send)  # send msg
                 print(f"[{ip}] {msg}")
-                port.send("msg received".encode(FORMAT))
+                # port.send("msg received".encode(FORMAT))
 
         port.close()
 
@@ -175,6 +175,5 @@ class Ship():
 
 
 server = Server()
-serv = Server()
 server.create_battleground()
-# server.start()
+server.start()

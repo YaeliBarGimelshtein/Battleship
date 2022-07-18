@@ -58,14 +58,18 @@ class Client:
         self.socket.send(send_lenght)
         self.socket.send(message)
         # print(self.socket.recv(2048).decode(FORMAT))
-        return self.socket.recv(2048).decode(FORMAT)
+        return self.receive()
 
     def receive(self):
         """
         gets messages from the server and returns them
         :return: string message
         """
-        return self.socket.recv(2048).decode(FORMAT)
+        msg_lenght = self.socket.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
+        if msg_lenght:  # check not none
+            msg_lenght = int(msg_lenght)
+            msg = self.socket.recv(msg_lenght).decode(FORMAT)
+            print(list(msg))
 
     def gui(self, grid_from_server):
         """
