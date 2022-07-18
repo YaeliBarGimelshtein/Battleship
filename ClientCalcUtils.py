@@ -8,7 +8,7 @@ def check_rectangle_pressed(rectangles, position):
     for rectangle_row_index in range(1, 11):
         for rectangle_col_index in range(1, 11):
             if rectangles[rectangle_row_index][rectangle_col_index].collidepoint(position):
-                return rectangle_row_index, rectangle_col_index
+                return rectangle_row_index - 1, rectangle_col_index - 1
     return None, None
 
 
