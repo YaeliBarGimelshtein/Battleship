@@ -1,39 +1,49 @@
 import tkinter as tk
+from tkinter import ttk
 
 
-root = tk.Tk()
-
-canvas = tk.Canvas(root, width=600, height=300)
-canvas.grid(columnspan=4, rowspan=4)
-
-instructions = tk.Label(root, text="Add players names", font="Courier")
-instructions.grid(column=0, row=0)
-
-# player_one_label = tk.Label(root, text="Player 1: ", font="Courier")
-# instructions.grid(column=0, row=1)
-# player_two_label = tk.Label(root, text="Add players names", font="Courier")
-# instructions.grid(column=0, row=2)
-
-player_one_entry = tk.Entry(fg="black", bg="white", width=50)
-player_one_entry.grid(columnspan=1, column=2, row=1)
-
-player_two_entry = tk.Entry(fg="black", bg="white", width=50)
-player_two_entry.grid(columnspan=1, column=2, row=2)
-
-
-def finish_adding_players():
+def check_and_pass(player_one_entry, player_two_entry):
     print("finished adding names")
     player_one_name = player_one_entry.get()
     player_two_name = player_two_entry.get()
+    if len(player_one_name) != 0 and len(player_two_name) != 0:
+        app.destroy()
 
 
-button_text = tk.StringVar()
-button = tk.Button(root, textvariable=button_text, command=lambda: finish_adding_players(), font="Courier", bg="#0000FF"
-                   , fg="white", height=2, width=15)
-button_text.set("Done")
-button.grid(column=3, row=3)
+class first_window(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.geometry("240x100")
+        self.title('Start Game')
+        self.resizable(0, 0)
+
+        # configure the grid
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=3)
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Player One
+        Player_One_label = ttk.Label(self, text="Player One:")
+        Player_One_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
+
+        Player_One_entry = ttk.Entry(self)
+        Player_One_entry.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
+
+        # Player Two
+        Player_Two_label = ttk.Label(self, text="Player Two:")
+        Player_Two_label.grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
+
+        Player_Two_entry = ttk.Entry(self)
+        Player_Two_entry.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5)
+
+        # start button
+        login_button = ttk.Button(self, text="Start",
+                                  command=lambda: check_and_pass(Player_One_entry, Player_Two_entry))
+        login_button.grid(column=1, row=3, sticky=tk.E, padx=5, pady=5)
 
 
-
-
-root.mainloop()
+app = first_window()
+app.mainloop()

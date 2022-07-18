@@ -63,20 +63,6 @@ class Server:
                     send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
                     port.send(send_lenght)
                     port.send(ships_positions_json)
-
-
-                    # for i in ships_positions:
-                    #     points = []
-                    #     points.extend(list(i[0]))
-                    #     points.extend(list(i[1]))
-                    #     msg_to_send = str(points).encode(FORMAT)
-                    #     print(''.join(msg_to_send.decode(FORMAT)))
-                    #     #msg_to_send = np.array(self.create_battleground()).tobytes()
-                    #     msg_lenght = len(msg_to_send)
-                    #     send_lenght = str(msg_lenght).encode(FORMAT)
-                    #     send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-                    #     port.send(send_lenght)  # send header
-                    #     port.send(msg_to_send)  # send msg
                 print(f"[{ip}] {msg}")
                 # port.send("msg received".encode(FORMAT))
 
