@@ -102,8 +102,10 @@ class Server():
 
     def add_ship_to_board(self, size, board, ships):
         location = self.get_random_location()
-        while (not self.try_place_ship(location, size, board, ships)):
+        done = False
+        while (not done):
             location = self.get_random_location()
+            done =self.try_place_ship(location, size, board, ships)
         return
 
     def init_board(self, board):
@@ -123,6 +125,10 @@ class Server():
                 start_x = location[0] - size
                 if self.is_valid_location(start_x, end_x, start_y, end_y, board, ships):
                     return True
+                else:
+                    direction = i
+                    i += 1
+                    continue
             elif direction == 1:  # check for right direction
                 if location[0] + size >= self.board_size:
                     direction = i
@@ -131,6 +137,10 @@ class Server():
                 end_x = location[0] + size
                 if self.is_valid_location(start_x, end_x, start_y, end_y, board, ships):
                     return True
+                else:
+                    direction = i
+                    i += 1
+                    continue
             elif direction == 2:  # check for up durection
                 if location[1] - size < 0:
                     direction = i
@@ -139,6 +149,10 @@ class Server():
                 start_y = location[1] - size
                 if self.is_valid_location(start_x, end_x, start_y, end_y, board, ships):
                     return True
+                else:
+                    direction = i
+                    i += 1
+                    continue
             elif direction == 3:
                 if location[1] + size >= self.board_size:
                     direction = i
@@ -147,15 +161,19 @@ class Server():
                 end_y = location[1] + size
                 if self.is_valid_location(start_x, end_x, start_y, end_y, board, ships):
                     return True
+                else:
+                    direction = i
+                    i += 1
+                    continue
 
         return False
 
     def is_valid_location(self, start_x, end_x, start_y, end_y, board, ships):
-        for x in range(start_x, end_x ):  # run over the location and check if has ships
+        for x in range(start_x, end_x+1 ):  # run over the location and check if has ships
             for y in range(start_y, end_y + 1):
                 if board[x][y] == 1:
                     return False
-        for x in range(start_x, end_x ):  # assign ship at the location
+        for x in range(start_x, end_x+1 ):  # assign ship at the location
             for y in range(start_y, end_y + 1):
                 self.player1_board[x][y] = 1
         ship = [(start_x, start_y), (end_x, end_y)]
