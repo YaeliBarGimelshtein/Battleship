@@ -1,7 +1,8 @@
+import json
 import socket
 import threading
 import random
-import numpy as np
+
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
@@ -23,7 +24,7 @@ def singleton(class_):
 
 
 @singleton
-class Server():
+class Server:
 
     def __init__(self):
         print("[STARTING] server is starting...")
@@ -55,18 +56,27 @@ class Server():
                 elif msg == GET_BOARD_MESSAGE:
                     ships_positions =self.create_battleground()
                     print("board created!")
-                    for i in ships_positions:
-                        points = []
-                        points.extend(list(i[0]))
-                        points.extend(list(i[1]))
-                        msg_to_send = str(points).encode(FORMAT)
-                        print(''.join(msg_to_send.decode(FORMAT)))
-                        #msg_to_send = np.array(self.create_battleground()).tobytes()
-                        msg_lenght = len(msg_to_send)
-                        send_lenght = str(msg_lenght).encode(FORMAT)
-                        send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-                        port.send(send_lenght)  # send header
-                        port.send(msg_to_send)  # send msg
+                    ships_positions_json = json.dumps(ships_positions)
+                    msg_lenght = len(ships_positions_json)
+                    ships_positions_json = ships_positions_json.encode(FORMAT)
+                    send_lenght = str(msg_lenght).encode(FORMAT)
+                    send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+                    port.send(send_lenght)
+                    port.send(ships_positions_json)
+
+
+                    # for i in ships_positions:
+                    #     points = []
+                    #     points.extend(list(i[0]))
+                    #     points.extend(list(i[1]))
+                    #     msg_to_send = str(points).encode(FORMAT)
+                    #     print(''.join(msg_to_send.decode(FORMAT)))
+                    #     #msg_to_send = np.array(self.create_battleground()).tobytes()
+                    #     msg_lenght = len(msg_to_send)
+                    #     send_lenght = str(msg_lenght).encode(FORMAT)
+                    #     send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+                    #     port.send(send_lenght)  # send header
+                    #     port.send(msg_to_send)  # send msg
                 print(f"[{ip}] {msg}")
                 # port.send("msg received".encode(FORMAT))
 
@@ -188,18 +198,5 @@ def print_board(board):
         print()
 
 
-class Ship():
-    def __init__(self, size, start, end):
-        self.lives = size
-        self.start_x = start[0]
-        self.start_y = start[1]
-        self.end_x = end[0]
-        self.end_y = end[1]
-
-    def hit(self):
-        self.lives -= 1
-
-
 server = Server()
-#server.create_battleground()
 server.start()

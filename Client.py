@@ -1,7 +1,9 @@
+import json
 import socket
 import pygame
-from ClientGuiUtils import create_gui, draw_text, draw_rec_grid, draw_blink_rect
+from ClientGuiUtils import create_gui
 import ClientCalcUtils
+import Ship
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -21,11 +23,13 @@ class Client:
 
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.my_rectangles = []
+        self.my_grid_rectangles = []
         self.opponent_rectangles = []
+        self.ships = []
         self.screen = None
-        grid = self.connect_to_server()
-        self.gui(grid)
+        self.ships_indexes = self.connect_to_server()
+        self.ships = self.create_ships()
+        self.gui(self.ships)
 
     def connect_to_server(self):
         """
@@ -34,22 +38,13 @@ class Client:
         :return: grid to create the board
         """
         self.socket.connect(ADDRESS)
-        self.send(GET_BOARD_MESSAGE)
-        # TODO : get grid from server (2d int)
-        grid = []
-        for row in range(11):
-            grid.append([])
-            for column in range(11):
-                grid[row].append(0)
-        grid[4][5] = 1
-        grid[4][6] = 1
-        return grid
+        return self.send_and_receive(GET_BOARD_MESSAGE)
 
-    def send(self, msg):
+    def send_and_receive(self, msg):
         """
-        sends a message to the server through the socket
+        sends a message to the server through the socket and waits for a return
         :param msg: a string message to send to the server
-        :return: void
+        :return: the object from the server
         """
         message = msg.encode(FORMAT)
         msg_lenght = len(message)
@@ -57,22 +52,12 @@ class Client:
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
         self.socket.send(send_lenght)
         self.socket.send(message)
-        # print(self.socket.recv(2048).decode(FORMAT))
-        return self.receive()
-
-    def receive(self):
-        """
-        gets messages from the server and returns them
-        :return: string message
-        """
-        #msg_lenght = self.socket.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
-        #if msg_lenght:  # check not none
-        for i in range(10): ####NEED TO CHANGE THIS LATER
-            msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
+        msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
+        if msg_lenght:  # check not none
             msg_lenght = int(msg_lenght)
             msg = self.socket.recv(msg_lenght).decode(FORMAT)
-            values = ''.join(msg)
-            print(values)
+            object_from_server = json.loads(msg)
+            return object_from_server
 
     def gui(self, grid_from_server):
         """
@@ -80,14 +65,17 @@ class Client:
         :param grid_from_server: ships location generated from the server
         :return: void
         """
-        self.screen = create_gui(grid_from_server, self.my_rectangles, self.opponent_rectangles)
+        self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles)
+
+    def create_ships(self):
+        ships = []
+        for ship_indexes in self.ships_indexes:
+            ship = Ship.Ship(ship_indexes[0], ship_indexes[1])
+            ships.append(ship)
+        return ships
 
     def handle_game(self):
         done = False
-        game_start = False
-        font_fade = pygame.USEREVENT + 1
-        pygame.time.set_timer(font_fade, 800)
-        show_text = False
         while not done:
             # TODO : get message from server that game starts and cancel wait for opponent
             # TODO : get message from server to make a move
@@ -103,22 +91,12 @@ class Client:
                     x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
                     print(x, y)
                     if x is not None and y is not None:
-                        self.send("TRY HIT " + str(x) + " " + str(y))
-                if event.type == font_fade and not game_start:
-                    show_text = not show_text
-                    if show_text:
-                        draw_text(self.screen, WAIT_MESSAGE, (0, 0, 255), 370, 500, 32)
-                    else:
-                        draw_blink_rect(self.screen, (0, 0, 0), 370, 500, WAIT_MESSAGE)
-                if event.type == font_fade and game_start:
-                    pygame.time.set_timer(font_fade, 0)
-                    draw_blink_rect(self.screen, (0, 0, 0), 370, 500, WAIT_MESSAGE)
+                        self.send_and_receive("TRY HIT " + str(x) + " " + str(y))
 
             pygame.display.flip()
-            # clock.tick(60)
 
         pygame.quit()
-        self.send(DISCONNECT_MESSAGE)
+        self.send_and_receive(DISCONNECT_MESSAGE)
 
 
 client = Client()

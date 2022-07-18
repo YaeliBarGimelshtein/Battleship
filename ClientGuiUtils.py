@@ -28,14 +28,6 @@ def draw_rec_grid(screen, color, left, top):
     return pygame.draw.rect(screen, color, [left, top, RECTANGLE_WIDTH, RECTANGLE_HEIGHT])
 
 
-def draw_blink_rect(screen, color, left, top, text):
-    font = pygame.font.Font('freesansbold.ttf', HEADLINE_SIZE)
-    text = font.render(text, True, color)
-    text_rect_size_height = text.get_rect().height
-    text_rect_size_width = text.get_rect().width
-    return pygame.draw.rect(screen, color,  [left, top, text_rect_size_width, text_rect_size_height])
-
-
 def draw_text(screen, text, color, left, top, font_size):
     """
     add text to screen
@@ -72,7 +64,7 @@ def draw_headlines(screen, left, opponent_left, top):
     draw_text(screen, "Opponent Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
 
 
-def calc_fill_rectangle(grid_array, row, column):
+def calc_fill_rectangle(ships, row, column):
     """
     calculates the RGB color of rectangle filling
     :param grid_array: ships location generated from the server
@@ -80,9 +72,11 @@ def calc_fill_rectangle(grid_array, row, column):
     :param column: column of rectangle in the grid
     :return: RGB color of rectangle filling
     """
-    if grid_array is not None and grid_array[row][column] == 1:
-        return BLUE
-    elif column == 0 or row == 0:
+    if ships is not None:
+        for ship in ships:
+            if (row, column) in ship.indexes:
+                return BLUE
+    if column == 0 or row == 0:
         return BLACK
     else:
         return WHITE
@@ -116,7 +110,7 @@ def calc_top_point_rectangle(row):
     return (RECTANGLE_MARGIN + RECTANGLE_HEIGHT) * row + RECTANGLE_MARGIN
 
 
-def draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles):
+def draw_grids(screen, ships, my_rectangles, opponent_rectangles):
     """
     draw a grid that represent a playing board
     :param screen: the screen into the board is draw
@@ -130,7 +124,7 @@ def draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles):
         opponent_rectangles.append([])
         for column in range(BOARD_SIZE + 1):
             # my board
-            color = calc_fill_rectangle(grid_from_server, row, column)
+            color = calc_fill_rectangle(ships, row, column)
             left = calc_left_point_rectangle(column)
             top = calc_top_point_rectangle(row)
             my_rectangles[row].append(draw_rec_grid(screen, color, left, top))
