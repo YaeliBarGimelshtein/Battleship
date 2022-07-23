@@ -4,6 +4,7 @@ import pygame
 from ClientGuiUtils import create_gui
 import ClientCalcUtils
 import Ship
+import sys
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -22,6 +23,9 @@ class Client:
     """
 
     def __init__(self):
+        self.args = sys.argv
+        self.my_name = self.args[1]
+        self.opponent_name = self.args[2]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.my_grid_rectangles = []
         self.opponent_rectangles = []
@@ -65,7 +69,8 @@ class Client:
         :param grid_from_server: ships location generated from the server
         :return: void
         """
-        self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles)
+        self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
+                                 self.my_name, self.opponent_name)
 
     def create_ships(self):
         ships = []

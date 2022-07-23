@@ -59,9 +59,10 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
         draw_text(screen, BOARD_LETTERS[column - 1], WHITE, opponent_left, top, FONT_SIZE)
 
 
-def draw_headlines(screen, left, opponent_left, top):
-    draw_text(screen, "My Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
-    draw_text(screen, "Opponent Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+def draw_headlines(screen, left, opponent_left, top, my_name, opponent_name):
+    draw_text(screen, my_name + " Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+    draw_text(screen, opponent_name + " Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH,
+              top + RECTANGLE_HEIGHT + 10, 32)
 
 
 def calc_fill_rectangle(ships, row, column):
@@ -110,7 +111,7 @@ def calc_top_point_rectangle(row):
     return (RECTANGLE_MARGIN + RECTANGLE_HEIGHT) * row + RECTANGLE_MARGIN
 
 
-def draw_grids(screen, ships, my_rectangles, opponent_rectangles):
+def draw_grids(screen, ships, my_rectangles, opponent_rectangles, my_name, opponent_name):
     """
     draw a grid that represent a playing board
     :param screen: the screen into the board is draw
@@ -138,10 +139,10 @@ def draw_grids(screen, ships, my_rectangles, opponent_rectangles):
             draw_letter_row(screen, row, column, left, opponent_left, top)
             draw_number_column(screen, row, column, left, opponent_left, top)
 
-    draw_headlines(screen, left, opponent_left, top)
+    draw_headlines(screen, left, opponent_left, top, my_name, opponent_name)
 
 
-def create_gui(grid_from_server, my_rectangles, opponent_rectangles):
+def create_gui(grid_from_server, my_rectangles, opponent_rectangles, my_name, opponent_name):
     x = (RECTANGLE_WIDTH + 2 * RECTANGLE_MARGIN) * (BOARD_SIZE + 2) * 2
     y = (RECTANGLE_HEIGHT + RECTANGLE_MARGIN) * (BOARD_SIZE + 1) + SPACE_BETWEEN_BOARDS
 
@@ -155,7 +156,7 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles):
     screen.fill(BLACK)
 
     # Draw
-    draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles)
+    draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, my_name, opponent_name)
 
     # Flip the display
     pygame.display.flip()

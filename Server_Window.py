@@ -2,14 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 
 
-def check_and_pass(player_one_entry, player_two_entry, application):
-    print("finished adding names")
-    player_one_name = player_one_entry.get()
-    player_two_name = player_two_entry.get()
-    if len(player_one_name) != 0 and len(player_two_name) != 0:
-        application.destroy()
-
-
 class first_window(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -21,6 +13,11 @@ class first_window(tk.Tk):
         # configure the grid
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=3)
+
+        # names
+        self.player_1_name = tk.StringVar()
+        self.player_2_name = tk.StringVar()
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -40,8 +37,23 @@ class first_window(tk.Tk):
 
         # start button
         login_button = ttk.Button(self, text="Start",
-                                  command=lambda: check_and_pass(Player_One_entry, Player_Two_entry, self))
+                                  command=lambda: self.check_and_pass(Player_One_entry, Player_Two_entry))
         login_button.grid(column=1, row=3, sticky=tk.E, padx=5, pady=5)
+
+    def check_and_pass(self, player_one_entry, player_two_entry):
+        print("finished adding names")
+        player_one_name = player_one_entry.get()
+        player_two_name = player_two_entry.get()
+        if len(player_one_name) != 0 and len(player_two_name) != 0:
+            self.player_1_name = player_one_name
+            self.player_2_name = player_two_name
+            self.destroy()
+
+    def get_player_1_name(self):
+        return self.player_1_name
+
+    def get_player_2_name(self):
+        return self.player_2_name
 
 
 class Last_window(tk.Tk):
@@ -79,5 +91,5 @@ class Last_window(tk.Tk):
 
 # app = first_window()
 # app.mainloop()
-app = Last_window("Ran Sasson")
-app.mainloop()
+# app = Last_window("Ran Sasson")
+# app.mainloop()
