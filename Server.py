@@ -180,7 +180,7 @@ class Server:
 
     def start_client(self, player_name, opponent_name):
         path = os.path.abspath(self.client)
-        os.system(f'python{path}{player_name}{opponent_name}')
+        os.system(f'python {path} {player_name} {opponent_name}')
         pass
 
     def generate_and_send_board_for_client(self, port):
