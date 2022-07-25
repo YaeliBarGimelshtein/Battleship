@@ -74,11 +74,15 @@ class Server:
 
         self.server.listen()
         print(f"[LISTENING] Server is listening on {SERVER}")
-        # self.start_client(self.player_1_name, self.player_2_name)
+        
+        client_1_thread = threading.Thread(target=self.start_client, args=(self.player_1_name, self.player_2_name))
+        client_1_thread.start()
         port, ip = self.server.accept()  # blocks. waits for new connection to the server
         thread = threading.Thread(target=self.handle_client, args=(port, ip))
         thread.start()
-        # self.start_client(self.player_2_name, self.player_1_name)
+
+        client_2_thread = threading.Thread(target=self.start_client, args=(self.player_2_name, self.player_1_name))
+        client_2_thread.start()
         port, ip = self.server.accept()  # blocks. waits for new connection to the server
         thread = threading.Thread(target=self.handle_client, args=(port, ip))
         thread.start()
