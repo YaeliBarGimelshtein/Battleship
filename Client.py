@@ -11,6 +11,7 @@ PORT = 5050
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
 GET_BOARD_MESSAGE = "GET_BOARD"
+GET_TURN_MESSAGE = "GET_TURN"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 BLINK_EVENT = pygame.USEREVENT + 0
@@ -31,7 +32,7 @@ class Client:
         self.opponent_rectangles = []
         self.ships = []
         self.screen = None
-        self.ships_indexes = self.connect_to_server()
+        self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
         self.gui(self.ships)
 
@@ -42,7 +43,7 @@ class Client:
         :return: grid to create the board
         """
         self.socket.connect(ADDRESS)
-        return self.send_and_receive(GET_BOARD_MESSAGE)
+        return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
 
     def send_and_receive(self, msg):
         """
@@ -70,7 +71,7 @@ class Client:
         :return: void
         """
         self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
-                                 self.my_name, self.opponent_name)
+                                 self.my_name, self.opponent_name, self.turn)
 
     def create_ships(self):
         ships = []

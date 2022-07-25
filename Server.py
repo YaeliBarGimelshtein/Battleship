@@ -12,6 +12,7 @@ HEADER = 64  # each message will have a header to tell the message size
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
 GET_BOARD_MESSAGE = "GET_BOARD"
+GET_TURN_MESSAGE = "GET_TURN"
 XL_SHIP = 4
 L_SHIP = 3
 M_SHIP = 2
@@ -43,6 +44,9 @@ class Server:
         self.client = "Client.py"
         self.player_1_name = ""
         self.player_2_name = ""
+        self.player_1_turn = True
+        self.player_2_turn = False
+        self.asked_for_turn_first_time = False
 
     def handle_client(self, port, ip):
         """
@@ -62,6 +66,8 @@ class Server:
                     connected = False
                 elif msg == GET_BOARD_MESSAGE:
                     self.generate_and_send_board_for_client(port)
+                elif msg == GET_TURN_MESSAGE:
+                    self.generate_and_send_turn_for_client(port)
                 print(f"[{ip}] {msg}")
 
         port.close()
@@ -197,6 +203,24 @@ class Server:
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
         port.send(send_lenght)
         port.send(ships_positions_json)
+
+    def generate_and_send_turn_for_client(self, port):
+        if self.asked_for_turn_first_time:
+            turn = self.player_2_turn
+        else:
+            turn = self.player_1_turn
+            self.asked_for_turn_first_time = True
+        print("turn decided!")
+        turn_json = json.dumps(turn)
+        msg_lenght = len(turn_json)
+        turn_json = turn_json.encode(FORMAT)
+        send_lenght = str(msg_lenght).encode(FORMAT)
+        send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+        port.send(send_lenght)
+        port.send(turn_json)
+
+
+
 
 
 def print_board(board):
