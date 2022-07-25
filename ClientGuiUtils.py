@@ -60,8 +60,8 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
 
 
 def draw_headlines(screen, left, opponent_left, top, my_name, opponent_name):
-    draw_text(screen, my_name + " Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
-    draw_text(screen, opponent_name + " Grid", WHITE, opponent_left - 7 * RECTANGLE_WIDTH,
+    draw_text(screen, my_name + "'s Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+    draw_text(screen, opponent_name + "'s Grid", WHITE, opponent_left - 6 * RECTANGLE_WIDTH,
               top + RECTANGLE_HEIGHT + 10, 32)
 
 
