@@ -1,7 +1,7 @@
 import json
 import socket
 import pygame
-from ClientGuiUtils import create_gui
+from ClientGuiUtils import create_gui, draw_text, draw_blink_rect
 import ClientCalcUtils
 import Ship
 import sys
@@ -15,7 +15,11 @@ GET_TURN_MESSAGE = "GET_TURN"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 BLINK_EVENT = pygame.USEREVENT + 0
-WAIT_MESSAGE = "waiting for opponent"
+YOUR_TURN = "Your turn, Select opponent battleship location"
+OPPONENT_TURN = "Opponent Turn, please wait"
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BLUE = (0, 0, 255)
 
 
 class Client:
@@ -71,7 +75,7 @@ class Client:
         :return: void
         """
         self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
-                                 self.my_name, self.opponent_name, self.turn)
+                                 self.opponent_name, self.turn)
 
     def create_ships(self):
         ships = []
@@ -82,6 +86,9 @@ class Client:
 
     def handle_game(self):
         done = False
+        font_fade = pygame.USEREVENT + 1
+        show_text = False
+        pygame.time.set_timer(font_fade, 800)
         while not done:
             # TODO : get message from server that game starts and cancel wait for opponent
             # TODO : get message from server to make a move
@@ -98,6 +105,18 @@ class Client:
                     print(x, y)
                     if x is not None and y is not None:
                         self.send_and_receive("TRY HIT " + str(x) + " " + str(y))
+                if event.type == font_fade:
+                    show_text = not show_text
+                    if self.turn:
+                        text_to_show = YOUR_TURN
+                        color = BLUE
+                    else:
+                        text_to_show = OPPONENT_TURN
+                        color = WHITE
+                    if show_text:
+                        draw_text(self.screen, text_to_show, color, 10, 530, 32)
+                    else:
+                        draw_blink_rect(self.screen, BLACK, 10, 530, text_to_show)
 
             pygame.display.flip()
 

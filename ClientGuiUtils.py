@@ -14,8 +14,6 @@ RECTANGLE_MARGIN = 3
 FONT_SIZE = 22
 HEADLINE_SIZE = 32
 BLINK_EVENT = pygame.USEREVENT + 0
-YOUR_TURN = "Your turn, Select opponent battleship location"
-OPPONENT_TURN = "'s Turn, please wait"
 
 
 def draw_rec_grid(screen, color, left, top):
@@ -28,6 +26,14 @@ def draw_rec_grid(screen, color, left, top):
     :return: a rectangle bounding the changed pixels
     """
     return pygame.draw.rect(screen, color, [left, top, RECTANGLE_WIDTH, RECTANGLE_HEIGHT])
+
+
+def draw_blink_rect(screen, color, left, top, text):
+    font = pygame.font.Font('freesansbold.ttf', HEADLINE_SIZE)
+    text = font.render(text, True, color)
+    text_rect_size_height = text.get_rect().height
+    text_rect_size_width = text.get_rect().width
+    return pygame.draw.rect(screen, color,  [left, top, text_rect_size_width, text_rect_size_height])
 
 
 def draw_text(screen, text, color, left, top, font_size):
@@ -61,15 +67,10 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
         draw_text(screen, BOARD_LETTERS[column - 1], WHITE, opponent_left, top, FONT_SIZE)
 
 
-def draw_headlines(screen, left, opponent_left, top, my_name, opponent_name, turn):
-    draw_text(screen, my_name + "'s Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+def draw_headlines(screen, left, opponent_left, top, opponent_name, turn):
+    draw_text(screen, "Your Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
     draw_text(screen, opponent_name + "'s Grid", WHITE, opponent_left - 6 * RECTANGLE_WIDTH,
               top + RECTANGLE_HEIGHT + 10, 32)
-    if turn:
-        draw_text(screen, YOUR_TURN, BLUE, left - 5 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT * 2.5, 32)
-    else:
-        draw_text(screen, opponent_name + OPPONENT_TURN, WHITE, left -2 * RECTANGLE_WIDTH,
-                  top + RECTANGLE_HEIGHT * 2.5, 32)
 
 
 def calc_fill_rectangle(ships, row, column):
@@ -118,7 +119,7 @@ def calc_top_point_rectangle(row):
     return (RECTANGLE_MARGIN + RECTANGLE_HEIGHT) * row + RECTANGLE_MARGIN
 
 
-def draw_grids(screen, ships, my_rectangles, opponent_rectangles, my_name, opponent_name, turn):
+def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_name, turn):
     """
     draw a grid that represent a playing board
     :param screen: the screen into the board is draw
@@ -146,10 +147,10 @@ def draw_grids(screen, ships, my_rectangles, opponent_rectangles, my_name, oppon
             draw_letter_row(screen, row, column, left, opponent_left, top)
             draw_number_column(screen, row, column, left, opponent_left, top)
 
-    draw_headlines(screen, left, opponent_left, top, my_name, opponent_name, turn)
+    draw_headlines(screen, left, opponent_left, top, opponent_name, turn)
 
 
-def create_gui(grid_from_server, my_rectangles, opponent_rectangles, my_name, opponent_name, turn):
+def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn):
     x = (RECTANGLE_WIDTH + 2 * RECTANGLE_MARGIN) * (BOARD_SIZE + 2) * 2
     y = (RECTANGLE_HEIGHT + RECTANGLE_MARGIN) * (BOARD_SIZE + 1) + SPACE_BETWEEN_BOARDS
 
@@ -163,8 +164,10 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, my_name, op
     screen.fill(BLACK)
 
     # Draw
-    draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, my_name, opponent_name, turn)
+    draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn)
 
     # Flip the display
     pygame.display.flip()
+    if not turn:
+        pygame.display.iconify()
     return screen
