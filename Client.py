@@ -14,6 +14,7 @@ GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
 WAIT_TURN_MESSAGE = "WAIT_TURN"
 GAME_OVER = "GAME_OVER"
+IS_GAME_OVER = "IS_GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 BLINK_EVENT = pygame.USEREVENT + 0
@@ -99,6 +100,9 @@ class Client:
             self.show_hit_result(hit_successful_indexes)
             pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
+            self.game_over = self.send_and_receive(IS_GAME_OVER)
+            if self.game_over:
+                pygame.quit()
 
     def show_hit_result(self, hit_successful_indexes, row, column):
         if len(hit_successful_indexes) == 0:
@@ -145,11 +149,6 @@ class Client:
         show_text = False
         pygame.time.set_timer(font_fade, 800)
         while not done:
-            # TODO : get message from server to make a move
-            # TODO : get message from server to check opponent move
-            # TODO : get message from server to get hit or miss
-            # TODO : get message for win
-            # TODO : get message for loose
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True

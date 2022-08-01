@@ -7,6 +7,11 @@ class Ship:
         self.lives = self.calc_size()
         self.indexes = self.calc_all_indexes()
 
+    def __eq__(self, other):
+        if isinstance(other, Ship):
+            return self.start_x == other.start_x and self.start_y == other.start_y and self.end_x == other.end_x and \
+                   self.end_y == other.end_y and self.lives == other.lives and self.indexes.__eq__(other.indexes)
+
     def hit(self):
         self.lives -= 1
 
