@@ -102,9 +102,9 @@ class Client:
                 if self.turn and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # mouse left button pressed
                     pos = pygame.mouse.get_pos()
                     x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
-                    pygame.display.iconify()
                     print(x, y)
                     if x is not None and y is not None:
+                        pygame.display.iconify()
                         self.send_and_receive("TRY HIT " + str(x) + " " + str(y))
                 if not self.turn:
                     pygame.display.iconify()
