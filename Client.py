@@ -1,7 +1,7 @@
 import json
 import socket
 import pygame
-from ClientGuiUtils import create_gui, draw_text, draw_blink_rect
+from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid
 import ClientCalcUtils
 import Ship
 import sys
@@ -12,6 +12,8 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
 GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
+WAIT_TURN_MESSAGE = "WAIT_TURN"
+GAME_OVER = "GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 BLINK_EVENT = pygame.USEREVENT + 0
@@ -35,10 +37,12 @@ class Client:
         self.my_grid_rectangles = []
         self.opponent_rectangles = []
         self.ships = []
+        self.game_over = False
         self.screen = None
         self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
         self.gui(self.ships)
+        self.size_screen = (1, 1)
 
     def connect_to_server(self):
         """
@@ -49,20 +53,23 @@ class Client:
         self.socket.connect(ADDRESS)
         return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
 
-    def send_and_receive(self, msg):
+    def send_and_receive(self, obj):
         """
         sends a message to the server through the socket and waits for a return
-        :param msg: a string message to send to the server
+        :param obj: an object message to send to the server
         :return: the object from the server
         """
-        message = msg.encode(FORMAT)
-        msg_lenght = len(message)
+        obj_json = json.dumps(obj)
+        msg_lenght = len(obj_json)
+        obj_json = obj_json.encode(FORMAT)
         send_lenght = str(msg_lenght).encode(FORMAT)
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+        print("sent " + obj)
         self.socket.send(send_lenght)
-        self.socket.send(message)
+        self.socket.send(obj_json)
         msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
         if msg_lenght:  # check not none
+            print("got message")
             msg_lenght = int(msg_lenght)
             msg = self.socket.recv(msg_lenght).decode(FORMAT)
             object_from_server = json.loads(msg)
@@ -74,8 +81,8 @@ class Client:
         :param grid_from_server: ships location generated from the server
         :return: void
         """
-        self.screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
-                                 self.opponent_name, self.turn)
+        self.screen, self.size_screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
+                                                   self.opponent_name, self.turn)
 
     def create_ships(self):
         ships = []
@@ -84,13 +91,60 @@ class Client:
             ships.append(ship)
         return ships
 
+    def make_move(self):
+        pos = pygame.mouse.get_pos()
+        x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
+        if x is not None and y is not None:
+            hit_successful_indexes = self.send_and_receive((x, y))
+            self.show_hit_result(hit_successful_indexes)
+            pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
+            pygame.display.flip()
+
+    def show_hit_result(self, hit_successful_indexes, row, column):
+        if len(hit_successful_indexes) == 0:
+            color = BLACK
+            rec = self.opponent_rectangles[row][column]
+            draw_rec_grid(self.screen, color, rec.left, rec.top)
+        else:
+            for indexes in hit_successful_indexes:
+                color = BLUE
+                rec = self.opponent_rectangles[indexes[0]][indexes[1]]
+                draw_rec_grid(self.screen, color, rec.left, rec.top)
+
+    def get_ship_hit(self, row, column):
+        for ship in self.ships:
+            if (row, column) in ship.indexes:
+                return ship
+        return None
+
+    def check_opponent_move(self, row, column):
+        hit_indexes = []
+        is_hit = ClientCalcUtils.check_is_hit(self.my_grid_rectangles, row, column)
+        if is_hit:
+            ship = self.get_ship_hit(row, column)
+            if ship is not None:
+                ship.hit()
+                is_ship_drown = ClientCalcUtils.check_is_ship_drown(ship)
+                if is_ship_drown:  # dead ship
+                    self.ships.remove(ship)  # comperator!!!
+                    if len(self.ships) == 0:
+                        self.game_over = True
+                    return ship.indexes
+            else:
+                hit_indexes.append((row, column))
+                return hit_indexes
+        return hit_indexes
+
+    def send_game_over(self):
+        self.send_and_receive(GAME_OVER)
+        pygame.quit()
+
     def handle_game(self):
         done = False
         font_fade = pygame.USEREVENT + 1
         show_text = False
         pygame.time.set_timer(font_fade, 800)
         while not done:
-            # TODO : get message from server that game starts and cancel wait for opponent
             # TODO : get message from server to make a move
             # TODO : get message from server to check opponent move
             # TODO : get message from server to get hit or miss
@@ -99,15 +153,22 @@ class Client:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-                if self.turn and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # mouse left button pressed
-                    pos = pygame.mouse.get_pos()
-                    x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
-                    print(x, y)
-                    if x is not None and y is not None:
-                        pygame.display.iconify()
-                        self.send_and_receive("TRY HIT " + str(x) + " " + str(y))
+
+                if self.turn:
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # mouse left button pressed
+                        self.make_move()
+                        self.turn = False
+
                 if not self.turn:
-                    pygame.display.iconify()
+                    row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
+                    indexes = self.check_opponent_move(row, column)
+                    if self.game_over is False:
+                        pygame.display.set_mode(self.size_screen, pygame.SHOWN)
+                        pygame.display.flip()
+                        self.turn = self.send_and_receive(indexes)
+                    else:
+                        self.send_game_over()
+
                 if event.type == font_fade:
                     show_text = not show_text
                     if self.turn:

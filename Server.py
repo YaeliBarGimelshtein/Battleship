@@ -62,6 +62,7 @@ class Server:
             if msg_lenght:  # check not none
                 msg_lenght = int(msg_lenght)
                 msg = port.recv(msg_lenght).decode(FORMAT)
+                msg = json.loads(msg)
                 if msg == DISCONNECT_MESSAGE:
                     connected = False
                 elif msg == GET_BOARD_MESSAGE:
@@ -218,9 +219,6 @@ class Server:
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
         port.send(send_lenght)
         port.send(turn_json)
-
-
-
 
 
 def print_board(board):

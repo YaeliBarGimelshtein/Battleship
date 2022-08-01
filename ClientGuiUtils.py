@@ -157,7 +157,11 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_na
     pygame.init()
 
     # Set up the drawing window
-    screen = pygame.display.set_mode([x, y])
+    if turn:
+        mode = pygame.SHOWN
+    else:
+        mode = pygame.HIDDEN
+    screen = pygame.display.set_mode([x, y], mode)
     pygame.display.set_caption("Battleships")
 
     # Fill the background with white
@@ -168,6 +172,4 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_na
 
     # Flip the display
     pygame.display.flip()
-    if not turn:
-        pygame.display.iconify()
-    return screen
+    return screen, (x, y)

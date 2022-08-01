@@ -26,14 +26,11 @@ def check_is_hit(rectangles, row, column):
         return False
 
 
-def check_is_ship_hit(rectangles, ship_locations):
+def check_is_ship_drown(ship):
     """
-    check if a total ship has been hit
-    :param rectangles: list of rectangles on the board
-    :param ship_locations: list of location that represents the ship
-    :return: True if the entire ship was hit, otherwise False
+    checks if the ship had drown
+    :param ship: a wanted ship to check
+    :return: True if the ship had drown, else False
     """
-    for location in ship_locations:
-        if not check_is_hit(rectangles, location[0], location[1]):
-            return False
-    return True
+    return ship.lives == 0
+
