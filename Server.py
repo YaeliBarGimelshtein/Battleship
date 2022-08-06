@@ -13,6 +13,8 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
 GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
+TRY_HIT_MESSAGE = "TRY_HIT"
+RESULT_HIT_MESSAGE = "RESULT_HIT"
 XL_SHIP = 4
 L_SHIP = 3
 M_SHIP = 2
@@ -60,18 +62,27 @@ class Server:
         while connected:
             msg_lenght = port.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
             if msg_lenght:  # check not none
-                msg_lenght = int(msg_lenght)
-                msg = port.recv(msg_lenght).decode(FORMAT)
-                msg = json.loads(msg)
-                if msg == DISCONNECT_MESSAGE:
-                    connected = False
-                elif msg == GET_BOARD_MESSAGE:
-                    self.generate_and_send_board_for_client(port)
-                elif msg == GET_TURN_MESSAGE:
-                    self.generate_and_send_turn_for_client(port)
-                print(f"[{ip}] {msg}")
+                connected = self.recieveMassage(msg_lenght, port)
 
         port.close()
+
+    def recieveMassage(self, size, port):
+        msg_lenght = int(size)
+        msg = port.recv(msg_lenght).decode(FORMAT)
+        msg = json.loads(msg)
+        if msg == DISCONNECT_MESSAGE:
+            return False
+        elif msg == GET_BOARD_MESSAGE:
+            self.generate_and_send_board_for_client(port)
+        elif msg == GET_TURN_MESSAGE:
+            self.generate_and_send_turn_for_client(port)
+        elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
+            self.sendMassage("ACK", port)
+            self.send_try_hit(port,msg)
+
+
+        print(f"{msg}")
+        return True
 
     def start(self):
         get_names_window = first_window()
@@ -84,14 +95,14 @@ class Server:
 
         client_1_thread = threading.Thread(target=self.start_client, args=(self.player_1_name, self.player_2_name))
         client_1_thread.start()
-        port, ip = self.server.accept()  # blocks. waits for new connection to the server
-        thread = threading.Thread(target=self.handle_client, args=(port, ip))
+        self.player1_port, ip = self.server.accept()  # blocks. waits for new connection to the server
+        thread = threading.Thread(target=self.handle_client, args=(self.player1_port, ip))
         thread.start()
 
         client_2_thread = threading.Thread(target=self.start_client, args=(self.player_2_name, self.player_1_name))
         client_2_thread.start()
-        port, ip = self.server.accept()  # blocks. waits for new connection to the server
-        thread = threading.Thread(target=self.handle_client, args=(port, ip))
+        self.player2_port, ip = self.server.accept()  # blocks. waits for new connection to the server
+        thread = threading.Thread(target=self.handle_client, args=(self.player2_port, ip))
         thread.start()
         print(
             f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")  # one thread starts the program, not include it
@@ -194,16 +205,36 @@ class Server:
         os.system(f'python {path} {player_name} {opponent_name}')
         pass
 
+    def send_try_hit(self, port, msg):
+        if msg == TRY_HIT_MESSAGE:
+            if self.player_1_turn == True:
+                player_port_to_send = self.player2_port
+            else:
+                player_port_to_send = self.player1_port
+        elif msg == RESULT_HIT_MESSAGE:
+            if self.player_1_turn == False:
+                player_port_to_send = self.player2_port
+            else:
+                player_port_to_send = self.player1_port
+        self.pass_msg_to_other_player(port, player_port_to_send)
+        self.swap_turns()
+
+
+    def pass_msg_to_other_player(self, port, player_port_to_send):
+        size = port.recv(HEADER).decode(FORMAT)
+        msg_lenght = int(size)
+        msg = port.recv(msg_lenght).decode(FORMAT)
+        msg = json.loads(msg)
+        self.sendMassage(msg, player_port_to_send)
+
+    def swap_turns(self):
+        self.player_1_turn = not self.player_1_turn
+        self.player_2_turn = not self.player_2_turn
+
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()
         print("board created!")
-        ships_positions_json = json.dumps(ships_positions)
-        msg_lenght = len(ships_positions_json)
-        ships_positions_json = ships_positions_json.encode(FORMAT)
-        send_lenght = str(msg_lenght).encode(FORMAT)
-        send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        port.send(send_lenght)
-        port.send(ships_positions_json)
+        self.sendMassage(ships_positions, port)
 
     def generate_and_send_turn_for_client(self, port):
         if self.asked_for_turn_first_time:
@@ -212,13 +243,16 @@ class Server:
             turn = self.player_1_turn
             self.asked_for_turn_first_time = True
         print("turn decided!")
-        turn_json = json.dumps(turn)
-        msg_lenght = len(turn_json)
-        turn_json = turn_json.encode(FORMAT)
+        self.sendMassage(turn, port)
+
+    def sendMassage(self, msg, port):
+        msg_json = json.dumps(msg)
+        msg_lenght = len(msg_json)
+        msg_json = msg_json.encode(FORMAT)
         send_lenght = str(msg_lenght).encode(FORMAT)
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
         port.send(send_lenght)
-        port.send(turn_json)
+        port.send(msg_json)
 
 
 def print_board(board):

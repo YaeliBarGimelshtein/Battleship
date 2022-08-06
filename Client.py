@@ -13,6 +13,8 @@ DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and d
 GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
 WAIT_TURN_MESSAGE = "WAIT_TURN"
+TRY_HIT_MESSAGE = "TRY_HIT"
+RESULT_HIT_MESSAGE = "RESULT_HIT"
 GAME_OVER = "GAME_OVER"
 IS_GAME_OVER = "IS_GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -65,7 +67,7 @@ class Client:
         obj_json = obj_json.encode(FORMAT)
         send_lenght = str(msg_lenght).encode(FORMAT)
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        print("sent " + obj)
+        print("sent " + str(obj))
         self.socket.send(send_lenght)
         self.socket.send(obj_json)
         msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
@@ -96,8 +98,9 @@ class Client:
         pos = pygame.mouse.get_pos()
         x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
         if x is not None and y is not None:
+            self.send_and_receive(TRY_HIT_MESSAGE)
             hit_successful_indexes = self.send_and_receive((x, y))
-            self.show_hit_result(hit_successful_indexes)
+            self.show_hit_result(hit_successful_indexes,x,y)
             pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
             self.game_over = self.send_and_receive(IS_GAME_OVER)
@@ -134,9 +137,9 @@ class Client:
                     if len(self.ships) == 0:
                         self.game_over = True
                     return ship.indexes
-            else:
-                hit_indexes.append((row, column))
-                return hit_indexes
+                else:
+                    hit_indexes.append((row, column))
+                    return hit_indexes
         return hit_indexes
 
     def send_game_over(self):
@@ -164,6 +167,7 @@ class Client:
                     if self.game_over is False:
                         pygame.display.set_mode(self.size_screen, pygame.SHOWN)
                         pygame.display.flip()
+                        self.send_and_receive(RESULT_HIT_MESSAGE)
                         self.turn = self.send_and_receive(indexes)
                     else:
                         self.send_game_over()
