@@ -67,12 +67,12 @@ class Client:
         obj_json = obj_json.encode(FORMAT)
         send_lenght = str(msg_lenght).encode(FORMAT)
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        print("sent " + str(obj))
+        print("[CLIENT] sent " + str(obj))
         self.socket.send(send_lenght)
         self.socket.send(obj_json)
         msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
         if msg_lenght:  # check not none
-            print("got message")
+            print("[CLIENT] got message")
             msg_lenght = int(msg_lenght)
             msg = self.socket.recv(msg_lenght).decode(FORMAT)
             object_from_server = json.loads(msg)
