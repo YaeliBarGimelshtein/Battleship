@@ -102,6 +102,8 @@ class Client:
             self.send_and_receive(TRY_HIT_MESSAGE)
             hit_successful_indexes = self.send_and_receive((x, y))
             self.show_hit_result(hit_successful_indexes, x, y)
+            draw_blink_rect(self.screen, BLACK, 10, 530, YOUR_TURN)
+            pygame.display.flip()
             time.sleep(3)
             self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
@@ -110,7 +112,7 @@ class Client:
                 pygame.quit()
 
     def show_hit_result(self, hit_successful_indexes, row, column):
-        if len(hit_successful_indexes) == 0:
+        if len(hit_successful_indexes[0]) == 0:
             color = BLACK
             rec = self.opponent_rectangles[row+1][column+1]
             draw_rec_grid(self.screen, color, rec.left, rec.top)
@@ -139,11 +141,11 @@ class Client:
                     self.ships.remove(ship)  # comperator!!!
                     if len(self.ships) == 0:
                         self.game_over = True
-                    return ship.indexes
+                    return ship.indexes, self.game_over
                 else:
                     hit_indexes.append((row, column))
-                    return hit_indexes
-        return hit_indexes
+                    return hit_indexes, self.game_over
+        return hit_indexes, self.game_over
 
     def send_game_over(self):
         self.send_and_receive(GAME_OVER)
@@ -167,13 +169,13 @@ class Client:
                 if not self.turn:
                     row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
                     indexes = self.check_opponent_move(row, column)
-                    if self.game_over is False:
-                        pygame.display.set_mode(self.size_screen, pygame.SHOWN)
-                        pygame.display.flip()
-                        self.send_and_receive(RESULT_HIT_MESSAGE)
-                        self.turn = self.send_and_receive(indexes)
-                    else:
-                        self.send_game_over()
+                    self.send_and_receive(RESULT_HIT_MESSAGE)
+                    if self.game_over:
+                        pygame.quit()
+                    pygame.display.set_mode(self.size_screen, pygame.SHOWN)
+                    pygame.display.flip()
+                    self.send_and_receive(indexes)
+                    self.turn = True
 
                 if event.type == font_fade:
                     show_text = not show_text
