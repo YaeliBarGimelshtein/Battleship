@@ -15,6 +15,7 @@ GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
 TRY_HIT_MESSAGE = "TRY_HIT"
 RESULT_HIT_MESSAGE = "RESULT_HIT"
+GAME_OVER = "GAME_OVER"
 XL_SHIP = 4
 L_SHIP = 3
 M_SHIP = 2
@@ -78,7 +79,10 @@ class Server:
             self.generate_and_send_turn_for_client(port)
         elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
             self.sendMassage("ACK", port)
-            self.send_try_hit(port,msg)
+            self.pass_msg(port,msg)
+        elif msg == GAME_OVER:
+            self.sendMassage("ACK", port)
+            self.game_over()
         return True
 
     def start(self):
@@ -200,15 +204,15 @@ class Server:
     def start_client(self, player_name, opponent_name):
         path = os.path.abspath(self.client)
         os.system(f'python {path} {player_name} {opponent_name}')
-        pass
 
-    def send_try_hit(self, port, msg):
+    def pass_msg(self, port, msg):
         if msg == TRY_HIT_MESSAGE:
             if self.player_1_turn:
                 player_port_to_send = self.player2_port
             else:
                 player_port_to_send = self.player1_port
         elif msg == RESULT_HIT_MESSAGE:
+            self.sendMassage("ACK", port)
             if not self.player_1_turn:
                 player_port_to_send = self.player2_port
             else:
@@ -227,6 +231,11 @@ class Server:
         self.player_1_turn = not self.player_1_turn
         self.player_2_turn = not self.player_2_turn
 
+    def game_over(self):
+        if self.player_1_turn: #player 2 is the winner!
+            winner = self.player_2_name
+        else:
+            winner = self.player_1_name
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()
         print("board created!")

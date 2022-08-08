@@ -173,3 +173,34 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_na
     # Flip the display
     pygame.display.flip()
     return screen, (x, y)
+
+def draw_grids_during_game(screen, ships, my_rectangles, opponent_rectangles, opponent_name, turn):
+    """
+    draw a grid that represent a playing board
+    :param screen: the screen into the board is draw
+    :param grid_from_server: ships location generated from the server
+    :param opponent_rectangles: empty list of all rectangles of opponent board
+    :param my_rectangles: empty list of all rectangles of my board
+    :return:
+    """
+    for row in range(BOARD_SIZE + 1):
+        my_rectangles.append([])
+        opponent_rectangles.append([])
+        for column in range(BOARD_SIZE + 1):
+            # my board
+            color = calc_fill_rectangle(ships, row, column)
+            left = calc_left_point_rectangle(column)
+            top = calc_top_point_rectangle(row)
+            my_rectangles[row].append(draw_rec_grid(screen, color, left, top))
+
+            # opponent board
+            opponent_color = calc_fill_rectangle(None, row, column)
+            opponent_left = calc_left_point_opponent_rectangle(column, left)
+            opponent_rectangles[row].append(draw_rec_grid(screen, opponent_color, opponent_left, top))
+
+            # draw indicators
+            draw_letter_row(screen, row, column, left, opponent_left, top)
+            draw_number_column(screen, row, column, left, opponent_left, top)
+
+    draw_headlines(screen, left, opponent_left, top, opponent_name, turn)
+    return screen

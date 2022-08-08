@@ -1,7 +1,10 @@
 import json
 import socket
 import pygame
-from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid
+import win32con
+import win32gui
+
+from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid, draw_grids, draw_grids_during_game
 import ClientCalcUtils
 import Ship
 import sys
@@ -40,13 +43,15 @@ class Client:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.my_grid_rectangles = []
         self.opponent_rectangles = []
+        self.opponent_rectangles_colors = []
         self.ships = []
         self.game_over = False
         self.screen = None
+        self.surface = None
         self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
-        self.gui(self.ships)
         self.size_screen = (1, 1)
+        self.gui(self.ships)
 
     def connect_to_server(self):
         """
@@ -104,7 +109,9 @@ class Client:
             self.show_hit_result(hit_successful_indexes, x, y)
             draw_blink_rect(self.screen, BLACK, 10, 530, YOUR_TURN)
             pygame.display.flip()
-            time.sleep(3)
+            time.sleep(2)
+            # Minimize = win32gui.GetForegroundWindow()
+            # win32gui.ShowWindow(Minimize, win32con.SW_MINIMIZE)
             self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
             self.game_over = hit_successful_indexes[1]
@@ -115,12 +122,12 @@ class Client:
     def show_hit_result(self, hit_successful_indexes, row, column):
         if len(hit_successful_indexes[0]) == 0:
             color = BLACK
-            rec = self.opponent_rectangles[row+1][column+1]
+            rec = self.opponent_rectangles[row + 1][column + 1]
             draw_rec_grid(self.screen, color, rec.left, rec.top)
         else:
             for indexes in hit_successful_indexes:
                 color = BLUE
-                rec = self.opponent_rectangles[indexes[0]][indexes[1]] #Check if needed offset +1
+                rec = self.opponent_rectangles[indexes[0]][indexes[1]]  # Check if needed offset +1
                 draw_rec_grid(self.screen, color, rec.left, rec.top)
         pygame.display.flip()
 
@@ -171,11 +178,20 @@ class Client:
                     row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
                     indexes = self.check_opponent_move(row, column)
                     self.send_and_receive(RESULT_HIT_MESSAGE)
+                    self.send_and_receive(indexes)
                     if self.game_over:
                         pygame.quit()
-                    pygame.display.set_mode(self.size_screen, pygame.SHOWN)
+                    time.sleep(2)
+                    print("Showing screen after hidden")
+                    self.surface = pygame.display.get_surface()
+                    # hwnd = win32gui.GetForegroundWindow()
+                    # win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+
+                    self.screen = pygame.display.set_mode(self.size_screen, pygame.SHOWN)
+                    draw_grids_during_game(self.screen, self.ships, self.my_grid_rectangles, self.opponent_rectangles,
+                               self.opponent_name, self.turn)
+                    self.screen = self.surface
                     pygame.display.flip()
-                    self.send_and_receive(indexes)
                     self.turn = True
 
                 if event.type == font_fade:
