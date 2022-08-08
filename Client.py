@@ -1,9 +1,6 @@
 import json
 import socket
 import pygame
-import win32con
-import win32gui
-
 from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid, draw_grids, draw_grids_during_game
 import ClientCalcUtils
 import Ship
@@ -29,6 +26,7 @@ OPPONENT_TURN = "Opponent Turn, please wait"
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
+RED = (255, 0, 0)
 
 
 class Client:
@@ -91,7 +89,8 @@ class Client:
         :return: void
         """
         self.screen, self.size_screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
-                                                   self.opponent_name, self.turn)
+                                                   self.opponent_name, self.turn, self.opponent_rectangles_colors,
+                                                   self.my_name)
 
     def create_ships(self):
         ships = []
@@ -106,18 +105,24 @@ class Client:
         if x is not None and y is not None:
             self.send_and_receive(TRY_HIT_MESSAGE)
             hit_successful_indexes = self.send_and_receive((x, y))
+            self.update_colors_for_opponent_grid(hit_successful_indexes[0], x, y)
             self.show_hit_result(hit_successful_indexes, x, y)
             draw_blink_rect(self.screen, BLACK, 10, 530, YOUR_TURN)
             pygame.display.flip()
             time.sleep(2)
-            # Minimize = win32gui.GetForegroundWindow()
-            # win32gui.ShowWindow(Minimize, win32con.SW_MINIMIZE)
             self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
             self.game_over = hit_successful_indexes[1]
             if self.game_over:
                 self.send_and_receive(GAME_OVER)
                 pygame.quit()
+
+    def update_colors_for_opponent_grid(self, indexes, row, column):
+        if len(indexes) != 0:
+            for index in indexes:
+                self.opponent_rectangles_colors[index[0]][index[1]] = RED
+        else:
+            self.opponent_rectangles_colors[row][column] = BLACK
 
     def show_hit_result(self, hit_successful_indexes, row, column):
         if len(hit_successful_indexes[0]) == 0:
@@ -189,7 +194,7 @@ class Client:
 
                     self.screen = pygame.display.set_mode(self.size_screen, pygame.SHOWN)
                     draw_grids_during_game(self.screen, self.ships, self.my_grid_rectangles, self.opponent_rectangles,
-                               self.opponent_name, self.turn)
+                               self.opponent_rectangles_colors, self.opponent_name, self.turn, self.my_name)
                     self.screen = self.surface
                     pygame.display.flip()
                     self.turn = True

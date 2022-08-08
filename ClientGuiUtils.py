@@ -33,7 +33,7 @@ def draw_blink_rect(screen, color, left, top, text):
     text = font.render(text, True, color)
     text_rect_size_height = text.get_rect().height
     text_rect_size_width = text.get_rect().width
-    return pygame.draw.rect(screen, color,  [left, top, text_rect_size_width, text_rect_size_height])
+    return pygame.draw.rect(screen, color, [left, top, text_rect_size_width, text_rect_size_height])
 
 
 def draw_text(screen, text, color, left, top, font_size):
@@ -67,8 +67,8 @@ def draw_letter_row(screen, row, column, left, opponent_left, top):
         draw_text(screen, BOARD_LETTERS[column - 1], WHITE, opponent_left, top, FONT_SIZE)
 
 
-def draw_headlines(screen, left, opponent_left, top, opponent_name, turn):
-    draw_text(screen, "Your Grid", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
+def draw_headlines(screen, left, opponent_left, top, opponent_name, turn, my_name):
+    draw_text(screen, "Your Grid (" + my_name + ")", WHITE, left - 6 * RECTANGLE_WIDTH, top + RECTANGLE_HEIGHT + 10, 32)
     draw_text(screen, opponent_name + "'s Grid", WHITE, opponent_left - 6 * RECTANGLE_WIDTH,
               top + RECTANGLE_HEIGHT + 10, 32)
 
@@ -119,7 +119,8 @@ def calc_top_point_rectangle(row):
     return (RECTANGLE_MARGIN + RECTANGLE_HEIGHT) * row + RECTANGLE_MARGIN
 
 
-def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_name, turn):
+def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_rectangles_colors, opponent_name, turn,
+               my_name):
     """
     draw a grid that represent a playing board
     :param screen: the screen into the board is draw
@@ -131,6 +132,7 @@ def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_name,
     for row in range(BOARD_SIZE + 1):
         my_rectangles.append([])
         opponent_rectangles.append([])
+        opponent_rectangles_colors.append([])
         for column in range(BOARD_SIZE + 1):
             # my board
             color = calc_fill_rectangle(ships, row, column)
@@ -142,15 +144,18 @@ def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_name,
             opponent_color = calc_fill_rectangle(None, row, column)
             opponent_left = calc_left_point_opponent_rectangle(column, left)
             opponent_rectangles[row].append(draw_rec_grid(screen, opponent_color, opponent_left, top))
+            opponent_rectangles_colors[row].append(WHITE)
 
             # draw indicators
             draw_letter_row(screen, row, column, left, opponent_left, top)
             draw_number_column(screen, row, column, left, opponent_left, top)
 
-    draw_headlines(screen, left, opponent_left, top, opponent_name, turn)
+    draw_headlines(screen, left, opponent_left, top, opponent_name, turn, my_name)
     return screen
 
-def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn):
+
+def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn, opponent_rectangles_colors,
+               my_name):
     x = (RECTANGLE_WIDTH + 2 * RECTANGLE_MARGIN) * (BOARD_SIZE + 2) * 2
     y = (RECTANGLE_HEIGHT + RECTANGLE_MARGIN) * (BOARD_SIZE + 1) + SPACE_BETWEEN_BOARDS
 
@@ -168,13 +173,16 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_na
     screen.fill(BLACK)
 
     # Draw
-    screen = draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn)
+    screen = draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, opponent_rectangles_colors,
+                        opponent_name, turn, my_name)
 
     # Flip the display
     pygame.display.flip()
     return screen, (x, y)
 
-def draw_grids_during_game(screen, ships, my_rectangles, opponent_rectangles, opponent_name, turn):
+
+def draw_grids_during_game(screen, ships, my_rectangles, opponent_rectangles, opponent_rectangles_colors,
+                           opponent_name, turn, my_name):
     """
     draw a grid that represent a playing board
     :param screen: the screen into the board is draw
@@ -184,23 +192,21 @@ def draw_grids_during_game(screen, ships, my_rectangles, opponent_rectangles, op
     :return:
     """
     for row in range(BOARD_SIZE + 1):
-        my_rectangles.append([])
-        opponent_rectangles.append([])
         for column in range(BOARD_SIZE + 1):
             # my board
             color = calc_fill_rectangle(ships, row, column)
             left = calc_left_point_rectangle(column)
             top = calc_top_point_rectangle(row)
-            my_rectangles[row].append(draw_rec_grid(screen, color, left, top))
+            draw_rec_grid(screen, color, left, top)
 
             # opponent board
-            opponent_color = calc_fill_rectangle(None, row, column)
+            opponent_color = opponent_rectangles_colors[row][column]
             opponent_left = calc_left_point_opponent_rectangle(column, left)
-            opponent_rectangles[row].append(draw_rec_grid(screen, opponent_color, opponent_left, top))
+            draw_rec_grid(screen, opponent_color, opponent_left, top)
 
             # draw indicators
             draw_letter_row(screen, row, column, left, opponent_left, top)
             draw_number_column(screen, row, column, left, opponent_left, top)
 
-    draw_headlines(screen, left, opponent_left, top, opponent_name, turn)
+    draw_headlines(screen, left, opponent_left, top, opponent_name, turn, my_name)
     return screen
