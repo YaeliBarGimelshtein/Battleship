@@ -107,8 +107,9 @@ class Client:
             time.sleep(3)
             self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
-            self.game_over = self.send_and_receive(IS_GAME_OVER)
+            self.game_over = hit_successful_indexes[1]
             if self.game_over:
+                self.send_and_receive(GAME_OVER)
                 pygame.quit()
 
     def show_hit_result(self, hit_successful_indexes, row, column):
