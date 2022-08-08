@@ -5,6 +5,7 @@ from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid
 import ClientCalcUtils
 import Ship
 import sys
+import time
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -67,12 +68,12 @@ class Client:
         obj_json = obj_json.encode(FORMAT)
         send_lenght = str(msg_lenght).encode(FORMAT)
         send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        print("[CLIENT] sent " + str(obj))
+        print("[CLIENT" + self.my_name + "] sent " + str(obj))
         self.socket.send(send_lenght)
         self.socket.send(obj_json)
         msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
         if msg_lenght:  # check not none
-            print("[CLIENT] got message")
+            print("[CLIENT" + self.my_name + "] got message")
             msg_lenght = int(msg_lenght)
             msg = self.socket.recv(msg_lenght).decode(FORMAT)
             object_from_server = json.loads(msg)
@@ -100,8 +101,9 @@ class Client:
         if x is not None and y is not None:
             self.send_and_receive(TRY_HIT_MESSAGE)
             hit_successful_indexes = self.send_and_receive((x, y))
-            self.show_hit_result(hit_successful_indexes,x,y)
-            pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
+            self.show_hit_result(hit_successful_indexes, x, y)
+            time.sleep(3)
+            self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
             self.game_over = self.send_and_receive(IS_GAME_OVER)
             if self.game_over:
@@ -110,13 +112,14 @@ class Client:
     def show_hit_result(self, hit_successful_indexes, row, column):
         if len(hit_successful_indexes) == 0:
             color = BLACK
-            rec = self.opponent_rectangles[row][column]
+            rec = self.opponent_rectangles[row+1][column+1]
             draw_rec_grid(self.screen, color, rec.left, rec.top)
         else:
             for indexes in hit_successful_indexes:
                 color = BLUE
-                rec = self.opponent_rectangles[indexes[0]][indexes[1]]
+                rec = self.opponent_rectangles[indexes[0]][indexes[1]] #Check if needed offset +1
                 draw_rec_grid(self.screen, color, rec.left, rec.top)
+        pygame.display.flip()
 
     def get_ship_hit(self, row, column):
         for ship in self.ships:

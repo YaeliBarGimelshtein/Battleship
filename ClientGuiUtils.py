@@ -148,7 +148,7 @@ def draw_grids(screen, ships, my_rectangles, opponent_rectangles, opponent_name,
             draw_number_column(screen, row, column, left, opponent_left, top)
 
     draw_headlines(screen, left, opponent_left, top, opponent_name, turn)
-
+    return screen
 
 def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn):
     x = (RECTANGLE_WIDTH + 2 * RECTANGLE_MARGIN) * (BOARD_SIZE + 2) * 2
@@ -168,7 +168,7 @@ def create_gui(grid_from_server, my_rectangles, opponent_rectangles, opponent_na
     screen.fill(BLACK)
 
     # Draw
-    draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn)
+    screen = draw_grids(screen, grid_from_server, my_rectangles, opponent_rectangles, opponent_name, turn)
 
     # Flip the display
     pygame.display.flip()

@@ -79,9 +79,6 @@ class Server:
         elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
             self.sendMassage("ACK", port)
             self.send_try_hit(port,msg)
-
-
-        print(f"{msg}")
         return True
 
     def start(self):
@@ -207,18 +204,17 @@ class Server:
 
     def send_try_hit(self, port, msg):
         if msg == TRY_HIT_MESSAGE:
-            if self.player_1_turn == True:
+            if self.player_1_turn:
                 player_port_to_send = self.player2_port
             else:
                 player_port_to_send = self.player1_port
         elif msg == RESULT_HIT_MESSAGE:
-            if self.player_1_turn == False:
+            if not self.player_1_turn:
                 player_port_to_send = self.player2_port
             else:
                 player_port_to_send = self.player1_port
+            self.swap_turns()
         self.pass_msg_to_other_player(port, player_port_to_send)
-        self.swap_turns()
-
 
     def pass_msg_to_other_player(self, port, player_port_to_send):
         size = port.recv(HEADER).decode(FORMAT)
