@@ -42,10 +42,10 @@ class Client:
         self.my_grid_rectangles = []
         self.opponent_rectangles = []
         self.opponent_rectangles_colors = []
+        self.my_grid_rectangles_colors = []
         self.ships = []
         self.game_over = False
         self.screen = None
-        self.surface = None
         self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
         self.size_screen = (1, 1)
@@ -90,7 +90,7 @@ class Client:
         """
         self.screen, self.size_screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
                                                    self.opponent_name, self.turn, self.opponent_rectangles_colors,
-                                                   self.my_name)
+                                                   self.my_name, self.my_grid_rectangles_colors)
 
     def create_ships(self):
         ships = []
@@ -109,7 +109,7 @@ class Client:
             self.show_hit_result(hit_successful_indexes, x, y)
             draw_blink_rect(self.screen, BLACK, 10, 530, YOUR_TURN)
             pygame.display.flip()
-            time.sleep(2)
+            time.sleep(1)
             self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
             pygame.display.flip()
             self.game_over = hit_successful_indexes[1]
@@ -122,7 +122,14 @@ class Client:
             for index in indexes:
                 self.opponent_rectangles_colors[index[0]][index[1]] = RED
         else:
-            self.opponent_rectangles_colors[row][column] = BLACK
+            self.opponent_rectangles_colors[row + 1][column + 1] = BLACK
+
+    def update_colors_for_my_grid(self, indexes, row, column):
+        if len(indexes) != 0:
+            for index in indexes:
+                self.my_grid_rectangles_colors[index[0]][index[1]] = RED
+        else:
+            self.my_grid_rectangles_colors[row + 1][column + 1] = BLACK
 
     def show_hit_result(self, hit_successful_indexes, row, column):
         if len(hit_successful_indexes[0]) == 0:
@@ -136,28 +143,32 @@ class Client:
                 draw_rec_grid(self.screen, color, rec.left, rec.top)
         pygame.display.flip()
 
-    def get_ship_hit(self, row, column):
+    def check_did_any_ship_hit(self, row, column):
         for ship in self.ships:
-            if (row, column) in ship.indexes:
+            if ship.is_hit(row, column):
+                print("found a ship")
                 return ship
         return None
 
     def check_opponent_move(self, row, column):
+        print("started checking the move")
         hit_indexes = []
-        is_hit = ClientCalcUtils.check_is_hit(self.my_grid_rectangles, row, column)
-        if is_hit:
-            ship = self.get_ship_hit(row, column)
-            if ship is not None:
-                ship.hit()
-                is_ship_drown = ClientCalcUtils.check_is_ship_drown(ship)
-                if is_ship_drown:  # dead ship
-                    self.ships.remove(ship)  # comperator!!!
-                    if len(self.ships) == 0:
-                        self.game_over = True
-                    return ship.indexes, self.game_over
-                else:
-                    hit_indexes.append((row, column))
-                    return hit_indexes, self.game_over
+        ship = self.check_did_any_ship_hit(row, column)
+        if ship is not None:
+            print("found the ship that was hit")
+            ship.hit(row, column)
+            is_ship_drown = ship.drown()
+            if is_ship_drown:  # dead ship
+                self.ships.remove(ship)
+                if len(self.ships) == 0:
+                    self.game_over = True
+                self.update_colors_for_my_grid(ship.indexes, row, column)
+                return ship.indexes, self.game_over
+            else:
+                print("whole ship did not die so i need to append and return indexes")
+                hit_indexes.append((row, column))
+                self.update_colors_for_my_grid(hit_indexes, row, column)
+                return hit_indexes, self.game_over
         return hit_indexes, self.game_over
 
     def send_game_over(self):
@@ -182,20 +193,17 @@ class Client:
                 if not self.turn:
                     row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
                     indexes = self.check_opponent_move(row, column)
+                    print(indexes)
                     self.send_and_receive(RESULT_HIT_MESSAGE)
                     self.send_and_receive(indexes)
                     if self.game_over:
                         pygame.quit()
-                    time.sleep(2)
+                    time.sleep(1)
                     print("Showing screen after hidden")
-                    self.surface = pygame.display.get_surface()
-                    # hwnd = win32gui.GetForegroundWindow()
-                    # win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-
                     self.screen = pygame.display.set_mode(self.size_screen, pygame.SHOWN)
                     draw_grids_during_game(self.screen, self.ships, self.my_grid_rectangles, self.opponent_rectangles,
-                               self.opponent_rectangles_colors, self.opponent_name, self.turn, self.my_name)
-                    self.screen = self.surface
+                                           self.opponent_rectangles_colors, self.opponent_name, self.turn, self.my_name,
+                                           self.my_grid_rectangles_colors)
                     pygame.display.flip()
                     self.turn = True
 

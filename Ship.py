@@ -6,14 +6,26 @@ class Ship:
         self.end_y = end[1]
         self.lives = self.calc_size()
         self.indexes = self.calc_all_indexes()
+        self.hit_indexes = []
 
     def __eq__(self, other):
         if isinstance(other, Ship):
-            return self.start_x == other.start_x and self.start_y == other.start_y and self.end_x == other.end_x and \
+            return self.start_x == other.start_x and self.start_y == other.start_y and self.end_x == other.end_x and\
                    self.end_y == other.end_y and self.lives == other.lives and self.indexes.__eq__(other.indexes)
 
-    def hit(self):
+    def hit(self, row, column):
         self.lives -= 1
+        self.indexes.remove((row, column))
+        self.hit_indexes.append((row, column))
+
+    def is_hit(self, row, column):
+        if (row, column) in self.indexes:
+            return True
+        else:
+            return False
+
+    def drown(self):
+        return self.lives == 0
 
     def calc_size(self):
         if self.start_x == self.end_x:
