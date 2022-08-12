@@ -198,7 +198,7 @@ class client_window(tk.Tk):
         self.send_and_receive(RESULT_HIT_MESSAGE)
         self.send_and_receive(indexes)
         if self.game_over:
-            self.destroy()
+            self.send_game_over()
         self.turn = True
         self.update_instructions("Your turn, select opponent battleship location")
         # time.sleep(2)
@@ -217,6 +217,7 @@ class client_window(tk.Tk):
                 self.ships.remove(ship)
                 if len(self.ships) == 0:
                     self.game_over = True
+                    self.destroy()
                 self.update_colors_for_my_grid(ship.hit_indexes, row, column)
                 return ship.hit_indexes, self.game_over
             else:
