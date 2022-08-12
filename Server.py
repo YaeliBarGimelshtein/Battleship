@@ -106,9 +106,11 @@ class Server:
         thread = threading.Thread(target=self.handle_client, args=(self.player2_port, ip))
         thread.start()
         print(
-            f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")  # one thread starts the program, not include it
+            f"[ACTIVE CONNECTIONS] {threading.activeCount() - 3}")  # one thread starts the program, not include it
 
     def create_battleground(self):
+        self.player1_board = None
+        self.player1_ships.clear()
         self.player1_board = self.init_board()
         for size in self.ships_sizes:
             self.add_ship_to_board(size, self.player1_board, self.player1_ships)
@@ -236,6 +238,7 @@ class Server:
             winner = self.player_2_name
         else:
             winner = self.player_1_name
+
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()
         print("board created!")

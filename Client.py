@@ -1,12 +1,11 @@
+import tkinter as tk
+from tkinter import *
+from tkinter import ttk
+from tkinter.font import Font
 import json
-import socket
-import pygame
-from ClientGuiUtils import create_gui, draw_text, draw_blink_rect, draw_rec_grid, draw_grids, draw_grids_during_game
-import ClientCalcUtils
 import Ship
-import sys
+import socket
 import time
-
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
 FORMAT = 'utf-8'
@@ -20,7 +19,6 @@ GAME_OVER = "GAME_OVER"
 IS_GAME_OVER = "IS_GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
-BLINK_EVENT = pygame.USEREVENT + 0
 YOUR_TURN = "Your turn, Select opponent battleship location"
 OPPONENT_TURN = "Opponent Turn, please wait"
 BLACK = (0, 0, 0)
@@ -29,27 +27,95 @@ BLUE = (0, 0, 255)
 RED = (255, 0, 0)
 
 
-class Client:
-    """
-    represents a client connecting to server and created gui
-    """
-
+class client_window(tk.Tk):
     def __init__(self):
+        super().__init__()
+
+        # client information
         self.args = sys.argv
         self.my_name = self.args[1]
         self.opponent_name = self.args[2]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.my_grid_rectangles = []
-        self.opponent_rectangles = []
-        self.opponent_rectangles_colors = []
-        self.my_grid_rectangles_colors = []
         self.ships = []
         self.game_over = False
-        self.screen = None
         self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
-        self.size_screen = (1, 1)
-        self.gui(self.ships)
+
+        # client gui
+        self.title('Battleship')
+        self.resizable(0, 0)
+        self.geometry("1000x500")
+        self.font = Font(family='Arial', size=14, weight='normal')
+        self.configure(bg='black')
+        self.instructions = tk.StringVar()
+        self.instructions = "make a move by selecting a ship location"
+        self.create_columns_rows()
+        self.instructions_label = self.create_Labels(self.my_name, self.opponent_name)
+        self.opponent_buttons, self.my_buttons = self.create_buttons()
+        self.flash()
+        self.show_or_hide()
+        if not self.turn:
+            self.wait_for_move()
+
+    def create_columns_rows(self):
+        for column in range(35):
+            self.columnconfigure(column, weight=2)
+        for row in range(20):
+            self.rowconfigure(row, weight=1)
+
+    def create_Labels(self, player_1, player_2):
+        # Player One
+        Player_One_label = ttk.Label(self, text="Your Grid (" + player_1 + ")", font=self.font,
+                                     foreground="white", background="black")
+        Player_One_label.grid(column=7, row=16, sticky=tk.W, padx=5, pady=5, columnspan=10)
+
+        # Player Two
+        Player_Two_label = ttk.Label(self, text=player_2 + "'s Grid", font=self.font,
+                                     foreground="white", background="black")
+        Player_Two_label.grid(column=23, row=16, sticky=tk.W, padx=5, pady=5, columnspan=10)
+
+        # instructions
+        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="white",  background="black")
+        instructions.grid(column=1, row=18, sticky=tk.W, padx=5, pady=5, columnspan=30)
+        return instructions
+
+    def flash(self):
+        bg = self.instructions_label.cget("background")
+        fg = self.instructions_label.cget("foreground")
+        self.instructions_label.configure(background=fg, foreground=bg, text=self.instructions)
+        self.after(800, self.flash)
+
+    def get_button_color(self, row, column):
+        for ship in self.ships:
+            if (row, column) in ship.indexes:
+                return "blue"
+        return "white"
+
+    def create_buttons(self):
+        opponent_buttons = []
+        my_buttons = []
+        for row in range(5, 15, 1):
+            my_buttons.append([])
+            for column in range(5, 15, 1):
+                color = self.get_button_color(row-5, column-5)
+                button = Button(self, width=2, height=1, bg=color, state="disable")
+                button.grid(column=column, row=row)
+                my_buttons[row-5].append(button)
+
+        for row in range(5, 15, 1):
+            opponent_buttons.append([])
+            for column in range(20, 30, 1):
+                button = Button(self, width=2, height=1, command=lambda x=row-5, y=column-20: self.make_move(x, y),
+                                bg="white")
+                button.grid(column=column, row=row)
+                opponent_buttons[row-5].append(button)
+
+        return opponent_buttons, my_buttons
+
+    def show_or_hide(self):
+        if not self.turn:
+            self.iconify()
+            self.instructions_label.configure(text="")
 
     def connect_to_server(self):
         """
@@ -82,66 +148,41 @@ class Client:
             object_from_server = json.loads(msg)
             return object_from_server
 
-    def gui(self, grid_from_server):
-        """
-        creates the gui for the game
-        :param grid_from_server: ships location generated from the server
-        :return: void
-        """
-        self.screen, self.size_screen = create_gui(grid_from_server, self.my_grid_rectangles, self.opponent_rectangles,
-                                                   self.opponent_name, self.turn, self.opponent_rectangles_colors,
-                                                   self.my_name, self.my_grid_rectangles_colors)
-
-    def create_ships(self):
-        ships = []
-        for ship_indexes in self.ships_indexes:
-            ship = Ship.Ship(ship_indexes[0], ship_indexes[1])
-            ships.append(ship)
-        return ships
-
-    def make_move(self):
-        pos = pygame.mouse.get_pos()
-        x, y = ClientCalcUtils.check_rectangle_pressed(self.opponent_rectangles, pos)  # can be none
-        if x is not None and y is not None:
-            self.send_and_receive(TRY_HIT_MESSAGE)
-            hit_successful_indexes = self.send_and_receive((x, y))
-            self.update_colors_for_opponent_grid(hit_successful_indexes[0], x, y)
-            self.show_hit_result(hit_successful_indexes, x, y)
-            draw_blink_rect(self.screen, BLACK, 10, 530, YOUR_TURN)
-            pygame.display.flip()
-            time.sleep(1)
-            self.screen = pygame.display.set_mode(self.size_screen, pygame.HIDDEN)
-            pygame.display.flip()
-            self.game_over = hit_successful_indexes[1]
-            if self.game_over:
-                self.send_and_receive(GAME_OVER)
-                pygame.quit()
-
     def update_colors_for_opponent_grid(self, indexes, row, column):
         if len(indexes) != 0:
             for index in indexes:
-                self.opponent_rectangles_colors[index[0]][index[1]] = RED
+                self.opponent_buttons[index[0]][index[1]].configure(bg='red')
         else:
-            self.opponent_rectangles_colors[row + 1][column + 1] = BLACK
+            self.opponent_buttons[row][column].configure(bg='black')
 
     def update_colors_for_my_grid(self, indexes, row, column):
         if len(indexes) != 0:
             for index in indexes:
-                self.my_grid_rectangles_colors[index[0]][index[1]] = RED
+                self.my_buttons[index[0]][index[1]].configure(bg='red')
         else:
-            self.my_grid_rectangles_colors[row + 1][column + 1] = BLACK
+            self.my_buttons[row][column].configure(text="X")
 
-    def show_hit_result(self, hit_successful_indexes, row, column):
-        if len(hit_successful_indexes[0]) == 0:
-            color = BLACK
-            rec = self.opponent_rectangles[row + 1][column + 1]
-            draw_rec_grid(self.screen, color, rec.left, rec.top)
-        else:
-            for indexes in hit_successful_indexes:
-                color = BLUE
-                rec = self.opponent_rectangles[indexes[0]][indexes[1]]  # Check if needed offset +1
-                draw_rec_grid(self.screen, color, rec.left, rec.top)
-        pygame.display.flip()
+    def update_instructions(self, txt):
+        self.instructions = txt
+        self.instructions_label.configure(text=self.instructions)
+
+    def make_move(self, row, column):
+        """
+        tries to hit a ship. shows the result on screen.
+        :return: void
+        """
+        self.send_and_receive(TRY_HIT_MESSAGE)
+        hit_successful_indexes = self.send_and_receive((row, column))
+        self.update_colors_for_opponent_grid(hit_successful_indexes[0], row, column)
+        self.game_over = hit_successful_indexes[1]
+        self.update_instructions("")
+        # time.sleep(2)
+        if self.game_over:
+            self.send_and_receive(GAME_OVER)
+            self.destroy()
+        self.turn = False
+        self.iconify()
+        self.wait_for_move()
 
     def check_did_any_ship_hit(self, row, column):
         for ship in self.ships:
@@ -149,6 +190,19 @@ class Client:
                 print("found a ship")
                 return ship
         return None
+
+    def wait_for_move(self):
+        row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
+        indexes = self.check_opponent_move(row, column)
+        print(indexes)
+        self.send_and_receive(RESULT_HIT_MESSAGE)
+        self.send_and_receive(indexes)
+        if self.game_over:
+            self.destroy()
+        self.turn = True
+        self.update_instructions("Your turn, select opponent battleship location")
+        # time.sleep(2)
+        self.deiconify()
 
     def check_opponent_move(self, row, column):
         print("started checking the move")
@@ -159,72 +213,36 @@ class Client:
             ship.hit(row, column)
             is_ship_drown = ship.drown()
             if is_ship_drown:  # dead ship
+                print("ship drown")
                 self.ships.remove(ship)
                 if len(self.ships) == 0:
                     self.game_over = True
-                self.update_colors_for_my_grid(ship.indexes, row, column)
-                return ship.indexes, self.game_over
+                self.update_colors_for_my_grid(ship.hit_indexes, row, column)
+                return ship.hit_indexes, self.game_over
             else:
                 print("whole ship did not die so i need to append and return indexes")
                 hit_indexes.append((row, column))
                 self.update_colors_for_my_grid(hit_indexes, row, column)
                 return hit_indexes, self.game_over
-        return hit_indexes, self.game_over
+        else:
+            self.update_colors_for_my_grid(hit_indexes, row, column)
+            return hit_indexes, self.game_over
 
     def send_game_over(self):
         self.send_and_receive(GAME_OVER)
-        pygame.quit()
+        self.destroy()
 
-    def handle_game(self):
-        done = False
-        font_fade = pygame.USEREVENT + 1
-        show_text = False
-        pygame.time.set_timer(font_fade, 800)
-        while not done:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    done = True
-
-                if self.turn:
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # mouse left button pressed
-                        self.make_move()
-                        self.turn = False
-
-                if not self.turn:
-                    row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
-                    indexes = self.check_opponent_move(row, column)
-                    print(indexes)
-                    self.send_and_receive(RESULT_HIT_MESSAGE)
-                    self.send_and_receive(indexes)
-                    if self.game_over:
-                        pygame.quit()
-                    time.sleep(1)
-                    print("Showing screen after hidden")
-                    self.screen = pygame.display.set_mode(self.size_screen, pygame.SHOWN)
-                    draw_grids_during_game(self.screen, self.ships, self.my_grid_rectangles, self.opponent_rectangles,
-                                           self.opponent_rectangles_colors, self.opponent_name, self.turn, self.my_name,
-                                           self.my_grid_rectangles_colors)
-                    pygame.display.flip()
-                    self.turn = True
-
-                if event.type == font_fade:
-                    show_text = not show_text
-                    if self.turn:
-                        text_to_show = YOUR_TURN
-                        color = BLUE
-                    else:
-                        text_to_show = OPPONENT_TURN
-                        color = WHITE
-                    if show_text:
-                        draw_text(self.screen, text_to_show, color, 10, 530, 32)
-                    else:
-                        draw_blink_rect(self.screen, BLACK, 10, 530, text_to_show)
-
-            pygame.display.flip()
-
-        pygame.quit()
-        self.send_and_receive(DISCONNECT_MESSAGE)
+    def create_ships(self):
+        """
+        creates ships objects from the array given from the server
+        :return: array of ships
+        """
+        ships = []
+        for ship_indexes in self.ships_indexes:
+            ship = Ship.Ship(ship_indexes[0], ship_indexes[1])
+            ships.append(ship)
+        return ships
 
 
-client = Client()
-client.handle_game()
+app = client_window()
+app.mainloop()
