@@ -5,6 +5,8 @@ from tkinter.font import Font
 import json
 import Ship
 import socket
+import sys
+import asyncio
 import time
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -53,8 +55,11 @@ class client_window(tk.Tk):
         self.instructions_label = self.create_Labels(self.my_name, self.opponent_name)
         self.opponent_buttons, self.my_buttons = self.create_buttons()
         self.flash()
-        self.show_or_hide()
+        # self.show_or_hide()
+
+        self.wait_visibility(self)
         if not self.turn:
+            self.withdraw()
             self.wait_for_move()
 
     def create_columns_rows(self):
@@ -75,7 +80,7 @@ class client_window(tk.Tk):
         Player_Two_label.grid(column=23, row=16, sticky=tk.W, padx=5, pady=5, columnspan=10)
 
         # instructions
-        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="white",  background="black")
+        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="white", background="black")
         instructions.grid(column=1, row=18, sticky=tk.W, padx=5, pady=5, columnspan=30)
         return instructions
 
@@ -97,24 +102,26 @@ class client_window(tk.Tk):
         for row in range(5, 15, 1):
             my_buttons.append([])
             for column in range(5, 15, 1):
-                color = self.get_button_color(row-5, column-5)
+                color = self.get_button_color(row - 5, column - 5)
                 button = Button(self, width=2, height=1, bg=color, state="disable")
                 button.grid(column=column, row=row)
-                my_buttons[row-5].append(button)
+                my_buttons[row - 5].append(button)
 
         for row in range(5, 15, 1):
             opponent_buttons.append([])
             for column in range(20, 30, 1):
-                button = Button(self, width=2, height=1, command=lambda x=row-5, y=column-20: self.make_move(x, y),
+                button = Button(self, width=2, height=1,
+                                command=lambda x=row - 5, y=column - 20: self.make_move(x, y),
                                 bg="white")
                 button.grid(column=column, row=row)
-                opponent_buttons[row-5].append(button)
+                opponent_buttons[row - 5].append(button)
 
         return opponent_buttons, my_buttons
 
     def show_or_hide(self):
         if not self.turn:
-            self.iconify()
+            self.withdraw()
+            # self.iconify()
             self.instructions_label.configure(text="")
 
     def connect_to_server(self):
@@ -176,12 +183,14 @@ class client_window(tk.Tk):
         self.update_colors_for_opponent_grid(hit_successful_indexes[0], row, column)
         self.game_over = hit_successful_indexes[1]
         self.update_instructions("")
-        # time.sleep(2)
         if self.game_over:
             self.send_and_receive(GAME_OVER)
             self.destroy()
+            return
         self.turn = False
-        self.iconify()
+        # time.sleep(1)
+        self.withdraw()
+        # self.iconify()
         self.wait_for_move()
 
     def check_did_any_ship_hit(self, row, column):
@@ -198,10 +207,11 @@ class client_window(tk.Tk):
         self.send_and_receive(RESULT_HIT_MESSAGE)
         self.send_and_receive(indexes)
         if self.game_over:
-            self.send_game_over()
+            self.destroy()
+            return
         self.turn = True
         self.update_instructions("Your turn, select opponent battleship location")
-        # time.sleep(2)
+        # time.sleep(1)
         self.deiconify()
 
     def check_opponent_move(self, row, column):
@@ -217,7 +227,6 @@ class client_window(tk.Tk):
                 self.ships.remove(ship)
                 if len(self.ships) == 0:
                     self.game_over = True
-                    self.destroy()
                 self.update_colors_for_my_grid(ship.hit_indexes, row, column)
                 return ship.hit_indexes, self.game_over
             else:

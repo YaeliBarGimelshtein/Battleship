@@ -4,6 +4,8 @@ import threading
 import random
 import os
 from Server_Window import first_window
+from Server_Window import Last_window
+
 
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -238,6 +240,9 @@ class Server:
             winner = self.player_2_name
         else:
             winner = self.player_1_name
+        print("Server got game over! winner is:" + winner)
+        last_window = Last_window(winner)
+        last_window.mainloop()
 
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()

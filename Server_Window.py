@@ -69,6 +69,7 @@ class Last_window(tk.Tk):
         self.columnconfigure(1, weight=2)
         self.winner_name = winner_name
         self.create_widgets(self.winner_name)
+        self.deiconify()
 
     def create_widgets(self, winner_name):
         # Winner is
@@ -87,7 +88,6 @@ class Last_window(tk.Tk):
         self.destroy()
         app_2 = first_window()
         app_2.mainloop()
-
 
 # app = first_window()
 # app.mainloop()
