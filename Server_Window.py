@@ -57,7 +57,7 @@ class first_window(tk.Tk):
 
 
 class Last_window(tk.Tk):
-    def __init__(self, winner_name):
+    def __init__(self, winner_name, server):
         super().__init__()
 
         self.geometry("240x100")
@@ -68,6 +68,7 @@ class Last_window(tk.Tk):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=2)
         self.winner_name = winner_name
+        self.server = server
         self.create_widgets(self.winner_name)
         self.deiconify()
 
@@ -86,8 +87,7 @@ class Last_window(tk.Tk):
 
     def replay(self):
         self.destroy()
-        app_2 = first_window()
-        app_2.mainloop()
+        self.server.start()
 
 # app = first_window()
 # app.mainloop()

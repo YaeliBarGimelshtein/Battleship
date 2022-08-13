@@ -6,8 +6,6 @@ import json
 import Ship
 import socket
 import sys
-import asyncio
-import time
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
 FORMAT = 'utf-8'
@@ -55,8 +53,6 @@ class client_window(tk.Tk):
         self.instructions_label = self.create_Labels(self.my_name, self.opponent_name)
         self.opponent_buttons, self.my_buttons = self.create_buttons()
         self.flash()
-        # self.show_or_hide()
-
         self.wait_visibility(self)
         if not self.turn:
             self.withdraw()
@@ -118,12 +114,6 @@ class client_window(tk.Tk):
 
         return opponent_buttons, my_buttons
 
-    def show_or_hide(self):
-        if not self.turn:
-            self.withdraw()
-            # self.iconify()
-            self.instructions_label.configure(text="")
-
     def connect_to_server(self):
         """
         Initialize connection to server and get location of battleships
@@ -184,13 +174,10 @@ class client_window(tk.Tk):
         self.game_over = hit_successful_indexes[1]
         self.update_instructions("")
         if self.game_over:
-            self.send_and_receive(GAME_OVER)
-            self.destroy()
+            self.send_game_over()
             return
         self.turn = False
-        # time.sleep(1)
         self.withdraw()
-        # self.iconify()
         self.wait_for_move()
 
     def check_did_any_ship_hit(self, row, column):
@@ -211,7 +198,6 @@ class client_window(tk.Tk):
             return
         self.turn = True
         self.update_instructions("Your turn, select opponent battleship location")
-        # time.sleep(1)
         self.deiconify()
 
     def check_opponent_move(self, row, column):

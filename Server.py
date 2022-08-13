@@ -6,7 +6,6 @@ import os
 from Server_Window import first_window
 from Server_Window import Last_window
 
-
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
@@ -27,12 +26,12 @@ S_SHIP = 1
 def singleton(class_):
     instances = {}
 
-    def getinstance(*args, **kwargs):
+    def get_instance(*args, **kwargs):
         if class_ not in instances:
             instances[class_] = class_(*args, **kwargs)
         return instances[class_]
 
-    return getinstance
+    return get_instance
 
 
 @singleton
@@ -65,11 +64,11 @@ class Server:
         while connected:
             msg_lenght = port.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
             if msg_lenght:  # check not none
-                connected = self.recieveMassage(msg_lenght, port)
+                connected = self.receive_massage(msg_lenght, port)
 
         port.close()
 
-    def recieveMassage(self, size, port):
+    def receive_massage(self, size, port):
         msg_lenght = int(size)
         msg = port.recv(msg_lenght).decode(FORMAT)
         msg = json.loads(msg)
@@ -80,10 +79,10 @@ class Server:
         elif msg == GET_TURN_MESSAGE:
             self.generate_and_send_turn_for_client(port)
         elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
-            self.sendMassage("ACK", port)
-            self.pass_msg(port,msg)
+            send_Massage("ACK", port)
+            self.pass_msg(port, msg)
         elif msg == GAME_OVER:
-            self.sendMassage("ACK", port)
+            send_Massage("ACK", port)
             self.game_over()
         return True
 
@@ -126,7 +125,6 @@ class Server:
         return x, y
 
     def add_ship_to_board(self, size, board, ships):
-        location = self.get_random_location()
         done = False
         while not done:
             location = self.get_random_location()
@@ -216,38 +214,31 @@ class Server:
             else:
                 player_port_to_send = self.player1_port
         elif msg == RESULT_HIT_MESSAGE:
-            self.sendMassage("ACK", port)
+            send_Massage("ACK", port)
             if not self.player_1_turn:
                 player_port_to_send = self.player2_port
             else:
                 player_port_to_send = self.player1_port
             self.swap_turns()
-        self.pass_msg_to_other_player(port, player_port_to_send)
-
-    def pass_msg_to_other_player(self, port, player_port_to_send):
-        size = port.recv(HEADER).decode(FORMAT)
-        msg_lenght = int(size)
-        msg = port.recv(msg_lenght).decode(FORMAT)
-        msg = json.loads(msg)
-        self.sendMassage(msg, player_port_to_send)
+        pass_msg_to_other_player(port, player_port_to_send)
 
     def swap_turns(self):
         self.player_1_turn = not self.player_1_turn
         self.player_2_turn = not self.player_2_turn
 
     def game_over(self):
-        if self.player_1_turn: #player 2 is the winner!
+        if self.player_1_turn:  # player 2 is the winner!
             winner = self.player_2_name
         else:
             winner = self.player_1_name
         print("Server got game over! winner is:" + winner)
-        last_window = Last_window(winner)
+        last_window = Last_window(winner, self)
         last_window.mainloop()
 
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()
         print("board created!")
-        self.sendMassage(ships_positions, port)
+        send_Massage(ships_positions, port)
 
     def generate_and_send_turn_for_client(self, port):
         if self.asked_for_turn_first_time:
@@ -256,16 +247,25 @@ class Server:
             turn = self.player_1_turn
             self.asked_for_turn_first_time = True
         print("turn decided!")
-        self.sendMassage(turn, port)
+        send_Massage(turn, port)
 
-    def sendMassage(self, msg, port):
-        msg_json = json.dumps(msg)
-        msg_lenght = len(msg_json)
-        msg_json = msg_json.encode(FORMAT)
-        send_lenght = str(msg_lenght).encode(FORMAT)
-        send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        port.send(send_lenght)
-        port.send(msg_json)
+
+def pass_msg_to_other_player(port, player_port_to_send):
+    size = port.recv(HEADER).decode(FORMAT)
+    msg_lenght = int(size)
+    msg = port.recv(msg_lenght).decode(FORMAT)
+    msg = json.loads(msg)
+    send_Massage(msg, player_port_to_send)
+
+
+def send_Massage(msg, port):
+    msg_json = json.dumps(msg)
+    msg_lenght = len(msg_json)
+    msg_json = msg_json.encode(FORMAT)
+    send_lenght = str(msg_lenght).encode(FORMAT)
+    send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+    port.send(send_lenght)
+    port.send(msg_json)
 
 
 def print_board(board):
