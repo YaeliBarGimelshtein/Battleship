@@ -6,6 +6,7 @@ import json
 import Ship
 import socket
 import sys
+
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
 FORMAT = 'utf-8'
@@ -16,7 +17,6 @@ WAIT_TURN_MESSAGE = "WAIT_TURN"
 TRY_HIT_MESSAGE = "TRY_HIT"
 RESULT_HIT_MESSAGE = "RESULT_HIT"
 GAME_OVER = "GAME_OVER"
-IS_GAME_OVER = "IS_GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
 YOUR_TURN = "Your turn, Select opponent battleship location"
@@ -42,6 +42,7 @@ class client_window(tk.Tk):
         self.ships = self.create_ships()
 
         # client gui
+        self.protocol("WM_DELETE_WINDOW", disable_event)
         self.title('Battleship')
         self.resizable(0, 0)
         self.geometry("1000x500")
@@ -238,6 +239,11 @@ class client_window(tk.Tk):
             ship = Ship.Ship(ship_indexes[0], ship_indexes[1])
             ships.append(ship)
         return ships
+
+    def disable_event(self):
+        print("disable")
+        self.send_and_receive(DISCONNECT_MESSAGE)
+        self.destroy()
 
 
 app = client_window()
