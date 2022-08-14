@@ -42,7 +42,7 @@ class client_window(tk.Tk):
         self.ships = self.create_ships()
 
         # client gui
-        self.protocol("WM_DELETE_WINDOW", disable_event)
+        self.protocol("WM_DELETE_WINDOW", self.disable_event)
         self.title('Battleship')
         self.resizable(0, 0)
         self.geometry("1000x500")
