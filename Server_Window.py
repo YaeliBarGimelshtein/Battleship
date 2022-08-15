@@ -6,7 +6,7 @@ class first_window(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.geometry("240x100")
+        self.geometry("300x100")
         self.title('Start Game')
         self.resizable(0, 0)
         self.attributes("-topmost", True)
@@ -19,6 +19,8 @@ class first_window(tk.Tk):
         self.player_1_name = tk.StringVar()
         self.player_2_name = tk.StringVar()
 
+        # Error label
+        self.error_label = ttk.Label(self, text="At least one character needed", foreground='red')
         self.create_widgets()
 
     def create_widgets(self):
@@ -34,7 +36,7 @@ class first_window(tk.Tk):
         Player_Two_label.grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
 
         Player_Two_entry = ttk.Entry(self)
-        Player_Two_entry.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5)
+        Player_Two_entry.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5, columnspan=3)
 
         # start button
         login_button = ttk.Button(self, text="Start",
@@ -49,6 +51,8 @@ class first_window(tk.Tk):
             self.player_1_name = player_one_name
             self.player_2_name = player_two_name
             self.destroy()
+        else:
+            self.error_label.grid(column=0, row=3, sticky=tk.E, padx=5, pady=5)
 
     def get_player_1_name(self):
         return self.player_1_name
