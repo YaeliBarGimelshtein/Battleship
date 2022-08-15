@@ -6,6 +6,7 @@ import os
 from Server_Window import first_window
 from Server_Window import Last_window
 import subprocess
+from datetime import datetime
 
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -40,7 +41,8 @@ def singleton(class_):
 class Server:
 
     def __init__(self):
-        print("[STARTING] server is starting...")
+        self.log = open("Server_log.txt", "w")
+        self.write_to_log("[STARTING] server is starting...")
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(ADDRESS)
         self.board_size = 10
@@ -64,7 +66,7 @@ class Server:
         :return: void
         """
         try:
-            print(f"[NEW CONNECTION] {ip} connected.")
+            self.write_to_log(f"[NEW CONNECTION] {ip} connected.")
             connected = True
             while connected:
                 msg_lenght = port.recv(HEADER).decode(
@@ -73,32 +75,34 @@ class Server:
                     connected = self.receive_massage(msg_lenght, port)
 
             port.close()
+            self.log.close()
         except ConnectionAbortedError:
-            print("connection was canceled")
+            # self.write_to_log("connection was canceled")
+            self.log.close()
             raise SystemExit
 
     def receive_massage(self, size, port):
-            msg_lenght = int(size)
-            msg = port.recv(msg_lenght).decode(FORMAT)
-            msg = json.loads(msg)
-            if msg == DISCONNECT_MESSAGE:
-                send_Massage("ACK", port)
-                self.disconnect_and_quit(port)
-                return False
-            elif msg == GET_BOARD_MESSAGE:
-                self.generate_and_send_board_for_client(port)
-            elif msg == GET_TURN_MESSAGE:
-                self.generate_and_send_turn_for_client(port)
-            elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
-                send_Massage("ACK", port)
-                self.pass_msg(port, msg)
-            elif msg == GAME_OVER:
-                send_Massage("ACK", port)
-                self.game_over()
-            elif msg == PID_MESSAGE:
-                send_Massage("ACK", port)
-                self.get_process_id(port)
-            return True
+        msg_lenght = int(size)
+        msg = port.recv(msg_lenght).decode(FORMAT)
+        msg = json.loads(msg)
+        if msg == DISCONNECT_MESSAGE:
+            send_Massage("ACK", port)
+            self.disconnect_and_quit(port)
+            return False
+        elif msg == GET_BOARD_MESSAGE:
+            self.generate_and_send_board_for_client(port)
+        elif msg == GET_TURN_MESSAGE:
+            self.generate_and_send_turn_for_client(port)
+        elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
+            send_Massage("ACK", port)
+            self.pass_msg(port, msg)
+        elif msg == GAME_OVER:
+            send_Massage("ACK", port)
+            self.game_over()
+        elif msg == PID_MESSAGE:
+            send_Massage("ACK", port)
+            self.get_process_id(port)
+        return True
 
     def start(self):
         get_names_window = first_window()
@@ -107,7 +111,7 @@ class Server:
         self.player_2_name = get_names_window.get_player_2_name()
 
         self.server.listen()
-        print(f"[LISTENING] Server is listening on {SERVER}")
+        self.write_to_log(f"[LISTENING] Server is listening on {SERVER}")
 
         client_1_thread = threading.Thread(target=self.start_client, args=(self.player_1_name, self.player_2_name))
         client_1_thread.start()
@@ -120,8 +124,7 @@ class Server:
         self.player2_port, ip = self.server.accept()  # blocks. waits for new connection to the server
         thread = threading.Thread(target=self.handle_client, args=(self.player2_port, ip))
         thread.start()
-        print(
-            f"[ACTIVE CONNECTIONS] {threading.activeCount() - 3}")  # one thread starts the program, not include it
+        self.write_to_log(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 3}")
 
     def create_battleground(self):
         self.player1_board = None
@@ -129,8 +132,8 @@ class Server:
         self.player1_board = self.init_board()
         for size in self.ships_sizes:
             self.add_ship_to_board(size, self.player1_board, self.player1_ships)
-        print(self.player1_ships)
-        print(len(self.player1_ships))
+        self.write_to_log(str(self.player1_ships))
+        self.write_to_log(str(len(self.player1_ships)))
         return self.player1_ships
 
     def get_random_location(self):
@@ -245,13 +248,13 @@ class Server:
             winner = self.player_2_name
         else:
             winner = self.player_1_name
-        print("Server got game over! winner is:" + winner)
+        self.write_to_log("Server got game over! winner is:" + winner)
         last_window = Last_window(winner, self)
         last_window.mainloop()
 
     def generate_and_send_board_for_client(self, port):
         ships_positions = self.create_battleground()
-        print("board created!")
+        self.write_to_log("board created!")
         send_Massage(ships_positions, port)
 
     def generate_and_send_turn_for_client(self, port):
@@ -260,7 +263,7 @@ class Server:
         else:
             turn = self.player_1_turn
             self.asked_for_turn_first_time = True
-        print("turn decided!")
+            self.write_to_log("turn decided!")
         send_Massage(turn, port)
 
     def get_process_id(self, port):
@@ -276,13 +279,19 @@ class Server:
         send_Massage("ACK", port)
 
     def disconnect_and_quit(self, port):
-        print("disconnect")
+        self.write_to_log("got disconnect message")
         if port == self.player1_port:
-            subprocess .Popen('taskkill /F /PID {0}'.format(self.player2_pid), shell=True)
+            subprocess.Popen('taskkill /F /PID {0}'.format(self.player2_pid), shell=True)
         else:
             subprocess.Popen('taskkill /F /PID {0}'.format(self.player1_pid), shell=True)
         self.player1_port.close()
         self.player2_port.close()
+
+    def write_to_log(self, msg):
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        name = "[Server]"
+        self.log.write(dt_string + " " + name + " " + " " + msg + "\n")
 
 
 def pass_msg_to_other_player(port, player_port_to_send):
@@ -301,13 +310,6 @@ def send_Massage(msg, port):
     send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
     port.send(send_lenght)
     port.send(msg_json)
-
-
-def print_board(board):
-    for i in range(len(board)):
-        for j in range(len(board)):
-            print(board[i][j], end="")
-        print()
 
 
 server = Server()

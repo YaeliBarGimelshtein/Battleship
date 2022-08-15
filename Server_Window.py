@@ -44,7 +44,6 @@ class first_window(tk.Tk):
         login_button.grid(column=1, row=3, sticky=tk.E, padx=5, pady=5)
 
     def check_and_pass(self, player_one_entry, player_two_entry):
-        print("finished adding names")
         player_one_name = player_one_entry.get()
         player_two_name = player_two_entry.get()
         if len(player_one_name) != 0 and len(player_two_name) != 0:

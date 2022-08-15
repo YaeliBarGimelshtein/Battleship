@@ -7,6 +7,7 @@ import Ship
 import socket
 import sys
 import os
+from datetime import datetime
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -37,6 +38,7 @@ class client_window(tk.Tk):
         self.args = sys.argv
         self.my_name = self.args[1]
         self.opponent_name = self.args[2]
+        self.log = open(self.my_name + "_log.txt", "w")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ships = []
         self.game_over = False
@@ -121,7 +123,7 @@ class client_window(tk.Tk):
             self.socket.connect(ADDRESS)
             return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
         except ConnectionRefusedError:
-            print("No server, can't run client without a server")
+            self.write_to_log("No server, can't run client without a server")
             raise SystemExit
 
     def send_pid(self):
@@ -141,17 +143,19 @@ class client_window(tk.Tk):
             obj_json = obj_json.encode(FORMAT)
             send_lenght = str(msg_lenght).encode(FORMAT)
             send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-            print("[CLIENT" + self.my_name + "] sent " + str(obj))
+            self.write_to_log("sent " + str(obj))
             self.socket.send(send_lenght)
             self.socket.send(obj_json)
             msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
             if msg_lenght:  # check not none
-                print("[CLIENT" + self.my_name + "] got message")
+                self.write_to_log("got message")
                 msg_lenght = int(msg_lenght)
                 msg = self.socket.recv(msg_lenght).decode(FORMAT)
                 object_from_server = json.loads(msg)
                 return object_from_server
         except ConnectionResetError:
+            self.write_to_log("got ConnectionResetError")
+            self.log.close()
             self.destroy()
 
     def update_colors_for_opponent_grid(self, indexes, row, column):
@@ -192,17 +196,18 @@ class client_window(tk.Tk):
     def check_did_any_ship_hit(self, row, column):
         for ship in self.ships:
             if ship.is_hit(row, column):
-                print("found a ship")
+                self.write_to_log("found a ship")
                 return ship
         return None
 
     def wait_for_move(self):
         row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
         indexes = self.check_opponent_move(row, column)
-        print(indexes)
+        self.write_to_log(str(indexes))
         self.send_and_receive(RESULT_HIT_MESSAGE)
         self.send_and_receive(indexes)
         if self.game_over:
+            self.log.close()
             self.destroy()
             return
         self.turn = True
@@ -210,22 +215,22 @@ class client_window(tk.Tk):
         self.deiconify()
 
     def check_opponent_move(self, row, column):
-        print("started checking the move")
+        self.write_to_log("started checking the move")
         hit_indexes = []
         ship = self.check_did_any_ship_hit(row, column)
         if ship is not None:
-            print("found the ship that was hit")
+            self.write_to_log("found the ship that was hit")
             ship.hit(row, column)
             is_ship_drown = ship.drown()
             if is_ship_drown:  # dead ship
-                print("ship drown")
+                self.write_to_log("ship drown")
                 self.ships.remove(ship)
                 if len(self.ships) == 0:
                     self.game_over = True
                 self.update_colors_for_my_grid(ship.hit_indexes, row, column)
                 return ship.hit_indexes, self.game_over
             else:
-                print("whole ship did not die so i need to append and return indexes")
+                self.write_to_log("whole ship did not drown, part was hit")
                 hit_indexes.append((row, column))
                 self.update_colors_for_my_grid(hit_indexes, row, column)
                 return hit_indexes, self.game_over
@@ -235,6 +240,7 @@ class client_window(tk.Tk):
 
     def send_game_over(self):
         self.send_and_receive(GAME_OVER)
+        self.log.close()
         self.destroy()
 
     def create_ships(self):
@@ -248,9 +254,16 @@ class client_window(tk.Tk):
             ships.append(ship)
         return ships
 
+    def write_to_log(self, msg):
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        name = "[" + self.my_name + "]"
+        self.log.write(dt_string + " " + name + " " + " " + msg + "\n")
+
     def disable_event(self):
-        print("disable")
+        self.write_to_log("disable")
         self.send_and_receive(DISCONNECT_MESSAGE)
+        self.log.close()
         self.destroy()
 
 
