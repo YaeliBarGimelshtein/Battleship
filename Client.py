@@ -37,6 +37,7 @@ class client_window(tk.Tk):
         # client gui
         self.protocol("WM_DELETE_WINDOW", self.disable_event)
         self.attributes("-topmost", True)
+
         self.title('Battleship')
         self.resizable(True, True)
         self.geometry("1000x500")
@@ -271,8 +272,10 @@ class client_window(tk.Tk):
             if is_ship_drown:  # dead ship
                 self.write_to_log("ship drown")
                 self.ships.remove(ship)
+                self.write_to_log(str(self.ships))
                 if len(self.ships) == 0:
                     self.game_over = True
+                    self.write_to_log("no more ships left, game over")
                 self.update_colors_for_my_grid(ship.hit_indexes, row, column)
                 return ship.hit_indexes, self.game_over
             else:

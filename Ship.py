@@ -18,6 +18,11 @@ class Ship:
             return self.start_x == other.start_x and self.start_y == other.start_y and self.end_x == other.end_x and \
                    self.end_y == other.end_y and self.lives == other.lives and self.indexes.__eq__(other.indexes)
 
+    def __str__(self):
+        ship_string = "ship: lives: " + self.lives + " indexes: " +\
+                      str(self.indexes) + " hit indexes: " + str(self.hit_indexes)
+        return ship_string
+
     def hit(self, row, column):
         """
         decreases the life of the ship and remove location to hit array
