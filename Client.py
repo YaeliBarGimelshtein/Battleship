@@ -45,7 +45,7 @@ class client_window(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.disable_event)
         self.attributes("-topmost", True)
         self.title('Battleship')
-        self.resizable(0, 0)
+        self.resizable(True, True)
         self.geometry("1000x500")
         self.font = Font(family='Arial', size=14, weight='normal')
         self.configure(bg='black')
