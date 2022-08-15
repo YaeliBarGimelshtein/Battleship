@@ -9,6 +9,7 @@ class first_window(tk.Tk):
         self.geometry("240x100")
         self.title('Start Game')
         self.resizable(0, 0)
+        self.attributes("-topmost", True)
 
         # configure the grid
         self.columnconfigure(0, weight=1)
@@ -63,6 +64,7 @@ class Last_window(tk.Tk):
         self.geometry("240x100")
         self.title('Game Ended')
         self.resizable(0, 0)
+        self.attributes("-topmost", True)
 
         # configure the grid
         self.columnconfigure(0, weight=1)

@@ -43,6 +43,7 @@ class client_window(tk.Tk):
 
         # client gui
         self.protocol("WM_DELETE_WINDOW", self.disable_event)
+        self.attributes("-topmost", True)
         self.title('Battleship')
         self.resizable(0, 0)
         self.geometry("1000x500")
