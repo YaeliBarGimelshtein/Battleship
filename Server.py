@@ -37,7 +37,7 @@ class Server:
         self.board_size = 10
         self.player1_board = [[]]
         self.player1_ships = []
-        self.ships_sizes = [S_SHIP, S_SHIP]
+        self.ships_sizes = [XL_SHIP, L_SHIP, L_SHIP, M_SHIP, M_SHIP, M_SHIP, S_SHIP, S_SHIP, S_SHIP, S_SHIP]
         self.client = "Client.py"
         self.player_1_name = ""
         self.player_2_name = ""
