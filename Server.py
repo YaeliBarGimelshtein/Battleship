@@ -3,27 +3,15 @@ import socket
 import threading
 import random
 import os
+
+from Constants import ADDRESS, L_SHIP, M_SHIP, S_SHIP, XL_SHIP, HEADER, FORMAT, DISCONNECT_MESSAGE, GET_BOARD_MESSAGE, \
+    GET_TURN_MESSAGE, TRY_HIT_MESSAGE, RESULT_HIT_MESSAGE, GAME_OVER, PID_MESSAGE, SERVER
 from Server_Window import first_window
 from Server_Window import Last_window
 import subprocess
 from datetime import datetime
 
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDRESS = (SERVER, PORT)
-HEADER = 64  # each message will have a header to tell the message size
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
-GET_BOARD_MESSAGE = "GET_BOARD"
-GET_TURN_MESSAGE = "GET_TURN"
-TRY_HIT_MESSAGE = "TRY_HIT"
-PID_MESSAGE = "PID"
-RESULT_HIT_MESSAGE = "RESULT_HIT"
-GAME_OVER = "GAME_OVER"
-XL_SHIP = 4
-L_SHIP = 3
-M_SHIP = 2
-S_SHIP = 1
+
 
 
 def singleton(class_):
@@ -77,7 +65,6 @@ class Server:
             port.close()
             self.log.close()
         except ConnectionAbortedError:
-            # self.write_to_log("connection was canceled")
             self.log.close()
             raise SystemExit
 

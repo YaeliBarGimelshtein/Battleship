@@ -8,26 +8,8 @@ import socket
 import sys
 import os
 from datetime import datetime
-
-HEADER = 64  # each message will have a header to tell the message size
-PORT = 5050
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and disconnect client
-GET_BOARD_MESSAGE = "GET_BOARD"
-GET_TURN_MESSAGE = "GET_TURN"
-WAIT_TURN_MESSAGE = "WAIT_TURN"
-TRY_HIT_MESSAGE = "TRY_HIT"
-RESULT_HIT_MESSAGE = "RESULT_HIT"
-PID_MESSAGE = "PID"
-GAME_OVER = "GAME_OVER"
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDRESS = (SERVER, PORT)
-YOUR_TURN = "Your turn, Select opponent battleship location"
-OPPONENT_TURN = "Opponent Turn, please wait"
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-BLUE = (0, 0, 255)
-RED = (255, 0, 0)
+from Constants import ADDRESS, GET_BOARD_MESSAGE, GET_TURN_MESSAGE, PID_MESSAGE, FORMAT, HEADER, TRY_HIT_MESSAGE, \
+    WAIT_TURN_MESSAGE, RESULT_HIT_MESSAGE, GAME_OVER, DISCONNECT_MESSAGE
 
 
 class client_window(tk.Tk):
