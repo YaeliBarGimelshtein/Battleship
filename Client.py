@@ -49,12 +49,10 @@ class client_window(tk.Tk):
         self.geometry("1000x500")
         self.font = Font(family='Arial', size=14, weight='normal')
         self.configure(bg='black')
-        self.instructions = tk.StringVar()
         self.instructions = "make a move by selecting a ship location"
         self.create_columns_rows()
         self.instructions_label = self.create_Labels(self.my_name, self.opponent_name)
         self.opponent_buttons, self.my_buttons = self.create_buttons()
-        self.flash()
         self.wait_visibility(self)
         if not self.turn:
             self.withdraw()
@@ -78,15 +76,9 @@ class client_window(tk.Tk):
         Player_Two_label.grid(column=23, row=16, sticky=tk.W, padx=5, pady=5, columnspan=10)
 
         # instructions
-        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="white", background="black")
+        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="black", background="white")
         instructions.grid(column=1, row=18, sticky=tk.W, padx=5, pady=5, columnspan=30)
         return instructions
-
-    def flash(self):
-        bg = self.instructions_label.cget("background")
-        fg = self.instructions_label.cget("foreground")
-        self.instructions_label.configure(background=fg, foreground=bg, text=self.instructions)
-        self.after(800, self.flash)
 
     def get_button_color(self, row, column):
         for ship in self.ships:
