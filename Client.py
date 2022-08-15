@@ -13,7 +13,13 @@ from Constants import ADDRESS, GET_BOARD_MESSAGE, GET_TURN_MESSAGE, PID_MESSAGE,
 
 
 class client_window(tk.Tk):
+    """
+    client_window represents a client with it's screen and data
+    """
     def __init__(self):
+        """
+        init of a client
+        """
         super().__init__()
 
         # client information
@@ -46,12 +52,22 @@ class client_window(tk.Tk):
             self.wait_for_move()
 
     def create_columns_rows(self):
+        """
+        configures rows and columns into the client's window
+        :return: void
+        """
         for column in range(35):
             self.columnconfigure(column, weight=2)
         for row in range(20):
             self.rowconfigure(row, weight=1)
 
     def create_Labels(self, player_1, player_2):
+        """
+        creates and grids players names and instruction onto the screen
+        :param player_1: first player name
+        :param player_2: second player name
+        :return: instructions label
+        """
         # Player One
         Player_One_label = ttk.Label(self, text="Your Grid (" + player_1 + ")", font=self.font,
                                      foreground="white", background="black")
@@ -68,12 +84,22 @@ class client_window(tk.Tk):
         return instructions
 
     def get_button_color(self, row, column):
+        """
+        calculates the color the square grid should be, blue if there's a ship in that location
+        :param row: row of square in the grid
+        :param column: column of square in the grid
+        :return:
+        """
         for ship in self.ships:
             if (row, column) in ship.indexes:
                 return "blue"
         return "white"
 
     def create_buttons(self):
+        """
+        creates and grids buttons as player's board
+        :return: 2 arrays of buttons that represent players grids
+        """
         opponent_buttons = []
         my_buttons = []
         for row in range(5, 15, 1):
@@ -97,9 +123,8 @@ class client_window(tk.Tk):
 
     def connect_to_server(self):
         """
-        Initialize connection to server and get location of battleships
-        :param self: the client
-        :return: grid to create the board
+        Initialize connection to server, get location of battleships and turn
+        :return: battleships locations, turn
         """
         try:
             self.socket.connect(ADDRESS)
@@ -109,15 +134,19 @@ class client_window(tk.Tk):
             raise SystemExit
 
     def send_pid(self):
+        """
+        sends the process id to server
+        :return: void
+        """
         pid = os.getpid()
         self.send_and_receive(PID_MESSAGE)
         self.send_and_receive(pid)
 
     def send_and_receive(self, obj):
         """
-        sends a message to the server through the socket and waits for a return
+        sends a message to the server through the socket and waits for a return object
         :param obj: an object message to send to the server
-        :return: the object from the server
+        :return: the object received from the server
         """
         try:
             obj_json = json.dumps(obj)
@@ -141,6 +170,13 @@ class client_window(tk.Tk):
             self.destroy()
 
     def update_colors_for_opponent_grid(self, indexes, row, column):
+        """
+        fills squares of the opponent grid with black if missed or red if hit
+        :param indexes: list of tuples that represent hit places [(x,y),..]
+        :param row: row  hit
+        :param column: column  hit
+        :return: void
+        """
         if len(indexes) != 0:
             for index in indexes:
                 self.opponent_buttons[index[0]][index[1]].configure(bg='red')
@@ -148,6 +184,13 @@ class client_window(tk.Tk):
             self.opponent_buttons[row][column].configure(bg='black')
 
     def update_colors_for_my_grid(self, indexes, row, column):
+        """
+        fills squares of the my grid with x if missed or red if hit
+        :param indexes: list of tuples that represent hit places [(x,y),..]
+        :param row: row opponent hit
+        :param column: column opponent hit
+        :return: void
+        """
         if len(indexes) != 0:
             for index in indexes:
                 self.my_buttons[index[0]][index[1]].configure(bg='red')
@@ -155,6 +198,11 @@ class client_window(tk.Tk):
             self.my_buttons[row][column].configure(text="X")
 
     def update_instructions(self, txt):
+        """
+        updates instruction label with given message
+        :param txt: message to update
+        :return: void
+        """
         self.instructions = txt
         self.instructions_label.configure(text=self.instructions)
 
@@ -176,6 +224,12 @@ class client_window(tk.Tk):
         self.wait_for_move()
 
     def check_did_any_ship_hit(self, row, column):
+        """
+        checks if any ship got hit
+        :param row: row hit
+        :param column: column hit
+        :return: ship if was hit, else None
+        """
         for ship in self.ships:
             if ship.is_hit(row, column):
                 self.write_to_log("found a ship")
@@ -183,6 +237,10 @@ class client_window(tk.Tk):
         return None
 
     def wait_for_move(self):
+        """
+        checks opponent move. shows the result on screen.
+        :return: void
+        """
         row, column = self.send_and_receive(WAIT_TURN_MESSAGE)
         indexes = self.check_opponent_move(row, column)
         self.write_to_log(str(indexes))
@@ -197,6 +255,12 @@ class client_window(tk.Tk):
         self.deiconify()
 
     def check_opponent_move(self, row, column):
+        """
+        checks if opponent hit a ship, drown a ship or didn't hit at all
+        :param row: row hit
+        :param column: column hit
+        :return: array of hit indexes [(x,y)..] that could be empty, true of false for game over
+        """
         self.write_to_log("started checking the move")
         hit_indexes = []
         ship = self.check_did_any_ship_hit(row, column)
@@ -221,14 +285,18 @@ class client_window(tk.Tk):
             return hit_indexes, self.game_over
 
     def send_game_over(self):
+        """
+        sends to server that the game is over and destroys the window
+        :return: void
+        """
         self.send_and_receive(GAME_OVER)
         self.log.close()
         self.destroy()
 
     def create_ships(self):
         """
-        creates ships objects from the array given from the server
-        :return: array of ships
+        creates ships objects from the indexes array
+        :return: array of ships indexes
         """
         ships = []
         for ship_indexes in self.ships_indexes:
@@ -237,12 +305,21 @@ class client_window(tk.Tk):
         return ships
 
     def write_to_log(self, msg):
+        """
+        writes to log file
+        :param msg: string message to write to log
+        :return: void
+        """
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         name = "[" + self.my_name + "]"
         self.log.write(dt_string + " " + name + " " + " " + msg + "\n")
 
     def disable_event(self):
+        """
+        sends a disconnect message and destroys the window
+        :return: void
+        """
         self.write_to_log("disable")
         self.send_and_receive(DISCONNECT_MESSAGE)
         self.log.close()

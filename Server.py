@@ -3,15 +3,11 @@ import socket
 import threading
 import random
 import os
-
 from Constants import ADDRESS, L_SHIP, M_SHIP, S_SHIP, XL_SHIP, HEADER, FORMAT, DISCONNECT_MESSAGE, GET_BOARD_MESSAGE, \
     GET_TURN_MESSAGE, TRY_HIT_MESSAGE, RESULT_HIT_MESSAGE, GAME_OVER, PID_MESSAGE, SERVER
-from Server_Window import first_window
-from Server_Window import Last_window
+from Server_Window import first_window, Last_window
 import subprocess
 from datetime import datetime
-
-
 
 
 def singleton(class_):
@@ -27,8 +23,13 @@ def singleton(class_):
 
 @singleton
 class Server:
-
+    """
+    Server represents a server with it's management functions
+    """
     def __init__(self):
+        """
+        init of a server
+        """
         self.log = open("Server_log.txt", "w")
         self.write_to_log("[STARTING] server is starting...")
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -69,6 +70,12 @@ class Server:
             raise SystemExit
 
     def receive_massage(self, size, port):
+        """
+        receive a message from client and handle it
+        :param size: message size
+        :param port: port number from where the message was sent
+        :return: True if client still connected, else False
+        """
         msg_lenght = int(size)
         msg = port.recv(msg_lenght).decode(FORMAT)
         msg = json.loads(msg)
@@ -92,6 +99,10 @@ class Server:
         return True
 
     def start(self):
+        """
+        creates two clients and starts them
+        :return: void
+        """
         get_names_window = first_window()
         get_names_window.mainloop()
         self.player_1_name = get_names_window.get_player_1_name()
@@ -114,6 +125,10 @@ class Server:
         self.write_to_log(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 3}")
 
     def create_battleground(self):
+        """
+        creates an random array of ships locations
+        :return: ships locations array
+        """
         self.player1_board = None
         self.player1_ships.clear()
         self.player1_board = self.init_board()
@@ -124,11 +139,22 @@ class Server:
         return self.player1_ships
 
     def get_random_location(self):
+        """
+        randomize a location for ship
+        :return: tuple represents location (x,y)
+        """
         x = random.randint(0, self.board_size - 1)
         y = random.randint(0, self.board_size - 1)
         return x, y
 
     def add_ship_to_board(self, size, board, ships):
+        """
+        adds the ships to the board
+        :param size: array defines ships and sizes
+        :param board: 2-d list that represents a board
+        :param ships: list of ships
+        :return: void
+        """
         done = False
         while not done:
             location = self.get_random_location()
@@ -136,10 +162,22 @@ class Server:
         return
 
     def init_board(self):
+        """
+        puts 0 in all 2-d array of board
+        :return: 2-d array represents board
+        """
         board = [[0 for x in range(self.board_size)] for y in range(self.board_size)]
         return board
 
     def try_place_ship(self, location, size, board, ships):
+        """
+        RAN EXPLAIN
+        :param location:
+        :param size:
+        :param board:
+        :param ships:
+        :return:
+        """
         start_x, end_x, start_y, end_y = location[0], location[0], location[1], location[1]
         direction = random.randint(0, 3)
         i = 0
@@ -196,6 +234,16 @@ class Server:
         return False
 
     def is_valid_location(self, start_x, end_x, start_y, end_y, board, ships):
+        """
+        checks if location for ship is valid ---> RAN EXPLAIN
+        :param start_x:
+        :param end_x:
+        :param start_y:
+        :param end_y:
+        :param board:
+        :param ships:
+        :return:
+        """
         for x in range(start_x, end_x + 1):  # run over the location and check if has ships
             for y in range(start_y, end_y + 1):
                 if board[x][y] == 1:
@@ -208,10 +256,22 @@ class Server:
         return True
 
     def start_client(self, player_name, opponent_name):
+        """
+        runs client script
+        :param player_name: name of player
+        :param opponent_name: name of second player
+        :return: void
+        """
         path = os.path.abspath(self.client)
         os.system(f'python {path} {player_name} {opponent_name}')
 
     def pass_msg(self, port, msg):
+        """
+        updates relevant data regrdings messages server got --> RAN EXPLAIN
+        :param port:
+        :param msg:
+        :return:
+        """
         if msg == TRY_HIT_MESSAGE:
             if self.player_1_turn:
                 player_port_to_send = self.player2_port
@@ -227,10 +287,18 @@ class Server:
         pass_msg_to_other_player(port, player_port_to_send)
 
     def swap_turns(self):
+        """
+        swaps the turns of players
+        :return: void
+        """
         self.player_1_turn = not self.player_1_turn
         self.player_2_turn = not self.player_2_turn
 
     def game_over(self):
+        """
+        created game over window and shows it
+        :return: void
+        """
         if self.player_1_turn:  # player 2 is the winner!
             winner = self.player_2_name
         else:
@@ -240,11 +308,21 @@ class Server:
         last_window.mainloop()
 
     def generate_and_send_board_for_client(self, port):
+        """
+        generates and sends ships locations to client
+        :param port: port of client to send
+        :return: void
+        """
         ships_positions = self.create_battleground()
         self.write_to_log("board created!")
         send_Massage(ships_positions, port)
 
     def generate_and_send_turn_for_client(self, port):
+        """
+        generates and sends turn to client
+        :param port: port of client to send
+        :return: void
+        """
         if self.asked_for_turn_first_time:
             turn = self.player_2_turn
         else:
@@ -254,11 +332,12 @@ class Server:
         send_Massage(turn, port)
 
     def get_process_id(self, port):
-        size = port.recv(HEADER).decode(FORMAT)
-        msg_lenght = int(size)
-        msg = port.recv(msg_lenght).decode(FORMAT)
-        msg = json.loads(msg)
-
+        """
+        get process id from client
+        :param port: port of client that sent pid
+        :return: void
+        """
+        msg = get_Message(port)
         if port == self.player1_port:
             self.player1_pid = msg
         else:
@@ -266,6 +345,11 @@ class Server:
         send_Massage("ACK", port)
 
     def disconnect_and_quit(self, port):
+        """
+        kill process that still remained connected and close ports
+        :param port: port of client that sent disconnect message
+        :return: void
+        """
         self.write_to_log("got disconnect message")
         if port == self.player1_port:
             subprocess.Popen('taskkill /F /PID {0}'.format(self.player2_pid), shell=True)
@@ -275,6 +359,11 @@ class Server:
         self.player2_port.close()
 
     def write_to_log(self, msg):
+        """
+        writes to log file
+        :param msg: string message to write to log
+        :return: void
+        """
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         name = "[Server]"
@@ -282,14 +371,31 @@ class Server:
 
 
 def pass_msg_to_other_player(port, player_port_to_send):
+    """
+    send message got from one player to other
+    :param port: port to get the message from
+    :param player_port_to_send: port to send message to
+    :return:
+    """
+    msg = get_Message(port)
+    send_Massage(msg, player_port_to_send)
+
+
+def get_Message(port):
     size = port.recv(HEADER).decode(FORMAT)
     msg_lenght = int(size)
     msg = port.recv(msg_lenght).decode(FORMAT)
     msg = json.loads(msg)
-    send_Massage(msg, player_port_to_send)
+    return msg
 
 
 def send_Massage(msg, port):
+    """
+    send a message to client
+    :param msg: data to send
+    :param port: port of client to send to
+    :return: void
+    """
     msg_json = json.dumps(msg)
     msg_lenght = len(msg_json)
     msg_json = msg_json.encode(FORMAT)

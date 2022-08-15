@@ -24,6 +24,10 @@ class first_window(tk.Tk):
         self.create_widgets()
 
     def create_widgets(self):
+        """
+        creates all widgets of the window
+        :return: void
+        """
         # Player One
         Player_One_label = ttk.Label(self, text="Player One:")
         Player_One_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
@@ -44,6 +48,12 @@ class first_window(tk.Tk):
         login_button.grid(column=1, row=3, sticky=tk.E, padx=5, pady=5)
 
     def check_and_pass(self, player_one_entry, player_two_entry):
+        """
+        checks if names are not empty
+        :param player_one_entry: entry of first name
+        :param player_two_entry: entry of second name
+        :return: names of players, if names not empty
+        """
         player_one_name = player_one_entry.get()
         player_two_name = player_two_entry.get()
         if len(player_one_name) != 0 and len(player_two_name) != 0:
@@ -54,9 +64,17 @@ class first_window(tk.Tk):
             self.error_label.grid(column=0, row=3, sticky=tk.E, padx=5, pady=5)
 
     def get_player_1_name(self):
+        """
+        get name of first player
+        :return: name
+        """
         return self.player_1_name
 
     def get_player_2_name(self):
+        """
+        get name of second player
+        :return: name
+        """
         return self.player_2_name
 
 
@@ -78,6 +96,10 @@ class Last_window(tk.Tk):
         self.deiconify()
 
     def create_widgets(self, winner_name):
+        """
+        creates all widgets of the window
+        :return: void
+        """
         # Winner is
         winner_is_label = ttk.Label(self, text="The winner is:")
         winner_is_label.grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
@@ -93,8 +115,3 @@ class Last_window(tk.Tk):
     def replay(self):
         self.destroy()
         self.server.start()
-
-# app = first_window()
-# app.mainloop()
-# app = Last_window("Ran Sasson")
-# app.mainloop()

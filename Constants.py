@@ -1,3 +1,6 @@
+"""
+Header file --> constants used by both server and client
+"""
 import socket
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
