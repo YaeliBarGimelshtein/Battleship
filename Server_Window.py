@@ -36,7 +36,7 @@ class first_window(tk.Tk):
         Player_Two_label.grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
 
         Player_Two_entry = ttk.Entry(self)
-        Player_Two_entry.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5, columnspan=3)
+        Player_Two_entry.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5)
 
         # start button
         login_button = ttk.Button(self, text="Start",
