@@ -114,8 +114,12 @@ class client_window(tk.Tk):
         :param self: the client
         :return: grid to create the board
         """
-        self.socket.connect(ADDRESS)
-        return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
+        try:
+            self.socket.connect(ADDRESS)
+            return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
+        except ConnectionRefusedError:
+            print("No server, can't run client without a server")
+            raise SystemExit
 
     def send_and_receive(self, obj):
         """
