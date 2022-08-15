@@ -5,6 +5,7 @@ import random
 import os
 from Server_Window import first_window
 from Server_Window import Last_window
+import subprocess
 
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -15,6 +16,7 @@ DISCONNECT_MESSAGE = "!DISCONNECT"  # when receiving, close the connection and d
 GET_BOARD_MESSAGE = "GET_BOARD"
 GET_TURN_MESSAGE = "GET_TURN"
 TRY_HIT_MESSAGE = "TRY_HIT"
+PID_MESSAGE = "PID"
 RESULT_HIT_MESSAGE = "RESULT_HIT"
 GAME_OVER = "GAME_OVER"
 XL_SHIP = 4
@@ -51,6 +53,8 @@ class Server:
         self.player_1_turn = True
         self.player_2_turn = False
         self.asked_for_turn_first_time = False
+        self.player1_pid = 0
+        self.player2_pid = 0
 
     def handle_client(self, port, ip):
         """
@@ -59,32 +63,45 @@ class Server:
         :param ip: client's ip address
         :return: void
         """
-        print(f"[NEW CONNECTION] {ip} connected.")
-        connected = True
-        while connected:
-            msg_lenght = port.recv(HEADER).decode(FORMAT)  # blocks until receiving a message and convert it from bytes
-            if msg_lenght:  # check not none
-                connected = self.receive_massage(msg_lenght, port)
+        try:
+            print(f"[NEW CONNECTION] {ip} connected.")
+            connected = True
+            while connected:
+                msg_lenght = port.recv(HEADER).decode(
+                    FORMAT)  # blocks until receiving a message and convert it from bytes
+                if msg_lenght:  # check not none
+                    connected = self.receive_massage(msg_lenght, port)
 
-        port.close()
+            port.close()
+        except ConnectionAbortedError:
+            print("connection was canceled")
+            raise SystemExit
 
     def receive_massage(self, size, port):
-        msg_lenght = int(size)
-        msg = port.recv(msg_lenght).decode(FORMAT)
-        msg = json.loads(msg)
-        if msg == DISCONNECT_MESSAGE:
-            return False
-        elif msg == GET_BOARD_MESSAGE:
-            self.generate_and_send_board_for_client(port)
-        elif msg == GET_TURN_MESSAGE:
-            self.generate_and_send_turn_for_client(port)
-        elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
-            send_Massage("ACK", port)
-            self.pass_msg(port, msg)
-        elif msg == GAME_OVER:
-            send_Massage("ACK", port)
-            self.game_over()
-        return True
+        try:
+            msg_lenght = int(size)
+            msg = port.recv(msg_lenght).decode(FORMAT)
+            msg = json.loads(msg)
+            if msg == DISCONNECT_MESSAGE:
+                send_Massage("ACK", port)
+                self.disconnect_and_quit(port)
+                return False
+            elif msg == GET_BOARD_MESSAGE:
+                self.generate_and_send_board_for_client(port)
+            elif msg == GET_TURN_MESSAGE:
+                self.generate_and_send_turn_for_client(port)
+            elif msg == TRY_HIT_MESSAGE or msg == RESULT_HIT_MESSAGE:
+                send_Massage("ACK", port)
+                self.pass_msg(port, msg)
+            elif msg == GAME_OVER:
+                send_Massage("ACK", port)
+                self.game_over()
+            elif msg == PID_MESSAGE:
+                send_Massage("ACK", port)
+                self.get_process_id(port)
+            return True
+        except ConnectionAbortedError:
+            self.disconnect_and_quit()
 
     def start(self):
         get_names_window = first_window()
@@ -248,6 +265,27 @@ class Server:
             self.asked_for_turn_first_time = True
         print("turn decided!")
         send_Massage(turn, port)
+
+    def get_process_id(self, port):
+        size = port.recv(HEADER).decode(FORMAT)
+        msg_lenght = int(size)
+        msg = port.recv(msg_lenght).decode(FORMAT)
+        msg = json.loads(msg)
+
+        if port == self.player1_port:
+            self.player1_pid = msg
+        else:
+            self.player2_pid = msg
+        send_Massage("ACK", port)
+
+    def disconnect_and_quit(self, port):
+        print("disconnect")
+        if port == self.player1_port:
+            subprocess .Popen('taskkill /F /PID {0}'.format(self.player2_pid), shell=True)
+        else:
+            subprocess.Popen('taskkill /F /PID {0}'.format(self.player1_pid), shell=True)
+        self.player1_port.close()
+        self.player2_port.close()
 
 
 def pass_msg_to_other_player(port, player_port_to_send):

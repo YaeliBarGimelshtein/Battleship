@@ -6,6 +6,7 @@ import json
 import Ship
 import socket
 import sys
+import os
 
 HEADER = 64  # each message will have a header to tell the message size
 PORT = 5050
@@ -16,6 +17,7 @@ GET_TURN_MESSAGE = "GET_TURN"
 WAIT_TURN_MESSAGE = "WAIT_TURN"
 TRY_HIT_MESSAGE = "TRY_HIT"
 RESULT_HIT_MESSAGE = "RESULT_HIT"
+PID_MESSAGE = "PID"
 GAME_OVER = "GAME_OVER"
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER, PORT)
@@ -40,6 +42,7 @@ class client_window(tk.Tk):
         self.game_over = False
         self.ships_indexes, self.turn = self.connect_to_server()
         self.ships = self.create_ships()
+        self.send_pid()
 
         # client gui
         self.protocol("WM_DELETE_WINDOW", self.disable_event)
@@ -121,27 +124,35 @@ class client_window(tk.Tk):
             print("No server, can't run client without a server")
             raise SystemExit
 
+    def send_pid(self):
+        pid = os.getpid()
+        self.send_and_receive(PID_MESSAGE)
+        self.send_and_receive(pid)
+
     def send_and_receive(self, obj):
         """
         sends a message to the server through the socket and waits for a return
         :param obj: an object message to send to the server
         :return: the object from the server
         """
-        obj_json = json.dumps(obj)
-        msg_lenght = len(obj_json)
-        obj_json = obj_json.encode(FORMAT)
-        send_lenght = str(msg_lenght).encode(FORMAT)
-        send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
-        print("[CLIENT" + self.my_name + "] sent " + str(obj))
-        self.socket.send(send_lenght)
-        self.socket.send(obj_json)
-        msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
-        if msg_lenght:  # check not none
-            print("[CLIENT" + self.my_name + "] got message")
-            msg_lenght = int(msg_lenght)
-            msg = self.socket.recv(msg_lenght).decode(FORMAT)
-            object_from_server = json.loads(msg)
-            return object_from_server
+        try:
+            obj_json = json.dumps(obj)
+            msg_lenght = len(obj_json)
+            obj_json = obj_json.encode(FORMAT)
+            send_lenght = str(msg_lenght).encode(FORMAT)
+            send_lenght += b' ' * (HEADER - len(send_lenght))  # pad to 64 bytes
+            print("[CLIENT" + self.my_name + "] sent " + str(obj))
+            self.socket.send(send_lenght)
+            self.socket.send(obj_json)
+            msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
+            if msg_lenght:  # check not none
+                print("[CLIENT" + self.my_name + "] got message")
+                msg_lenght = int(msg_lenght)
+                msg = self.socket.recv(msg_lenght).decode(FORMAT)
+                object_from_server = json.loads(msg)
+                return object_from_server
+        except ConnectionResetError:
+            self.destroy()
 
     def update_colors_for_opponent_grid(self, indexes, row, column):
         if len(indexes) != 0:
