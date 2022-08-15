@@ -78,7 +78,6 @@ class Server:
             raise SystemExit
 
     def receive_massage(self, size, port):
-        try:
             msg_lenght = int(size)
             msg = port.recv(msg_lenght).decode(FORMAT)
             msg = json.loads(msg)
@@ -100,8 +99,6 @@ class Server:
                 send_Massage("ACK", port)
                 self.get_process_id(port)
             return True
-        except ConnectionAbortedError:
-            self.disconnect_and_quit()
 
     def start(self):
         get_names_window = first_window()
