@@ -131,7 +131,7 @@ class client_window(tk.Tk):
             self.socket.connect(ADDRESS)
             return self.send_and_receive(GET_BOARD_MESSAGE), self.send_and_receive(GET_TURN_MESSAGE)
         except ConnectionRefusedError:
-            self.write_to_log("No server, can't run client without a server")
+            print("No server, can't run client without a server")
             raise SystemExit
 
     def send_pid(self):
