@@ -42,7 +42,8 @@ class client_window(tk.Tk):
 
         self.title('Battleship')
         self.resizable(True, True)
-        self.geometry("1000x500")
+        self.window_size = self.set_geometry()
+        self.geometry('%dx%d+%d+%d' % self.window_size)
         self.font = Font(family='Arial', size=14, weight='normal')
         self.configure(bg='black')
         self.instructions = "make a move by selecting a ship location"
@@ -53,6 +54,15 @@ class client_window(tk.Tk):
         if not self.turn:
             self.withdraw()
             self.wait_for_move()
+
+    def set_geometry(self):
+        width = 1000
+        height = 500
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width/2) - (width/2)
+        y = (screen_height/2) - (height/2)
+        return width, height, x, y
 
     def create_columns_rows(self):
         """
