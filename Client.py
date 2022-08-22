@@ -52,6 +52,8 @@ class client_window(tk.Tk):
         if not self.turn:
             self.withdraw()
             self.wait_for_move()
+        else:
+            self.deiconify()
 
     def create_columns_rows(self):
         """

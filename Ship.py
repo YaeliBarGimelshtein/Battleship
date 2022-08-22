@@ -59,20 +59,20 @@ class Ship:
         :return: size of ship (int)
         """
         if self.start_x == self.end_x:
-            return self.end_y - self.start_y
+            return abs(self.end_y - self.start_y)
         else:
-            return self.end_x - self.start_x
+            return abs(self.end_x - self.start_x)
 
     def calc_all_indexes(self):
         """
         calculates all indexes of the ship
         :return: array [(x,y)..] indexes of the ship
         """
-        indexes = [(self.start_x + 1, self.start_y + 1)]
+        indexes = [(self.start_x, self.start_y)]
         if self.start_x == self.end_x:
             for counter in range(1, self.lives):
-                indexes.append((self.start_x + 1, self.start_y + 1 + counter))
+                indexes.append((self.start_x, self.start_y + counter))
         else:
             for counter in range(1, self.lives):
-                indexes.append((self.start_x + 1 + counter, self.start_y + 1))
+                indexes.append((self.start_x + counter, self.start_y))
         return indexes
