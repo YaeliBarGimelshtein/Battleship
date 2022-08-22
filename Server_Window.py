@@ -10,6 +10,7 @@ class first_window(tk.Tk):
         self.title('Start Game')
         self.resizable(0, 0)
         self.attributes("-topmost", True)
+        self.protocol("WM_DELETE_WINDOW", self.disable_event)
 
         # configure the grid
         self.columnconfigure(0, weight=1)
@@ -77,6 +78,9 @@ class first_window(tk.Tk):
         """
         return self.player_2_name
 
+    def disable_event(self):
+        raise SystemExit
+
 
 class Last_window(tk.Tk):
     def __init__(self, winner_name, server):
@@ -86,6 +90,7 @@ class Last_window(tk.Tk):
         self.title('Game Ended')
         self.resizable(0, 0)
         self.attributes("-topmost", True)
+        self.protocol("WM_DELETE_WINDOW", self.disable_event)
 
         # configure the grid
         self.columnconfigure(0, weight=1)
@@ -115,3 +120,6 @@ class Last_window(tk.Tk):
     def replay(self):
         self.destroy()
         self.server.start()
+
+    def disable_event(self):
+        raise SystemExit

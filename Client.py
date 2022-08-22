@@ -16,6 +16,7 @@ class client_window(tk.Tk):
     """
     client_window represents a client with it's screen and data
     """
+
     def __init__(self):
         """
         init of a client
@@ -160,10 +161,10 @@ class client_window(tk.Tk):
             self.socket.send(obj_json)
             msg_lenght = self.socket.recv(HEADER).decode(FORMAT)
             if msg_lenght:  # check not none
-                self.write_to_log("got message")
                 msg_lenght = int(msg_lenght)
                 msg = self.socket.recv(msg_lenght).decode(FORMAT)
                 object_from_server = json.loads(msg)
+                self.write_to_log("got message: " + str(object_from_server))
                 return object_from_server
         except ConnectionResetError:
             self.write_to_log("got ConnectionResetError")
@@ -180,9 +181,9 @@ class client_window(tk.Tk):
         """
         if len(indexes) != 0:
             for index in indexes:
-                self.opponent_buttons[index[0]][index[1]].configure(bg='red')
+                self.opponent_buttons[index[0]][index[1]].configure(bg='red', state="disable")
         else:
-            self.opponent_buttons[row][column].configure(bg='black')
+            self.opponent_buttons[row][column].configure(bg='black', state="disable")
 
     def update_colors_for_my_grid(self, indexes, row, column):
         """
