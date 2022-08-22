@@ -313,7 +313,6 @@ class client_window(tk.Tk):
         self.update()
         self.send_and_receive(GAME_OVER)
         self.log.close()
-        time.sleep(5)
         self.destroy()
 
     def create_ships(self):

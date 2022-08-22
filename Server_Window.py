@@ -120,7 +120,7 @@ class Last_window(tk.Tk):
 
     def replay(self):
         self.destroy()
-        self.server.start()
+        self.server.restart()
 
     def disable_event(self):
         raise SystemExit

@@ -92,8 +92,7 @@ class Server:
             send_Massage("ACK", port)
             self.pass_msg(port, msg)
         elif msg == GAME_OVER:
-            send_Massage("ACK", port)
-            self.game_over()
+            self.game_over(port)
         elif msg == PID_MESSAGE:
             send_Massage("ACK", port)
             self.get_process_id(port)
@@ -298,7 +297,7 @@ class Server:
         self.player_1_turn = not self.player_1_turn
         self.player_2_turn = not self.player_2_turn
 
-    def game_over(self):
+    def game_over(self, port):
         """
         created game over window and shows it
         :return: void
@@ -310,6 +309,10 @@ class Server:
         self.write_to_log("Server got game over! winner is:" + winner)
         last_window = Last_window(winner, self)
         last_window.mainloop()
+
+    def restart(self, port):
+        send_Massage("ACK", port)
+        self.start()
 
     def generate_and_send_board_for_client(self, port):
         """
