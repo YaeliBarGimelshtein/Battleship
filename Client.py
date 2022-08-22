@@ -46,7 +46,8 @@ class client_window(tk.Tk):
         self.geometry('%dx%d+%d+%d' % self.window_size)
         self.font = Font(family='Arial', size=14, weight='normal')
         self.configure(bg='black')
-        self.instructions = "make a move by selecting a ship location"
+        self.instructions = StringVar()
+        self.instructions.set("make a move by selecting a ship location")
         self.create_columns_rows()
         self.instructions_label = self.create_Labels(self.my_name, self.opponent_name)
         self.opponent_buttons, self.my_buttons = self.create_buttons()
@@ -92,7 +93,8 @@ class client_window(tk.Tk):
         Player_Two_label.grid(column=23, row=16, sticky=tk.W, padx=5, pady=5, columnspan=10)
 
         # instructions
-        instructions = ttk.Label(self, text=self.instructions, font=self.font, foreground="black", background="white")
+        instructions = ttk.Label(self, textvariable=self.instructions, font=self.font, foreground="black",
+                                 background="white")
         instructions.grid(column=1, row=18, sticky=tk.W, padx=5, pady=5, columnspan=30)
         return instructions
 
@@ -216,8 +218,7 @@ class client_window(tk.Tk):
         :param txt: message to update
         :return: void
         """
-        self.instructions = txt
-        self.instructions_label.configure(text=self.instructions)
+        self.instructions.set(txt)
 
     def make_move(self, row, column):
         """
@@ -227,8 +228,10 @@ class client_window(tk.Tk):
         self.send_and_receive(TRY_HIT_MESSAGE)
         hit_successful_indexes = self.send_and_receive((row, column))
         self.update_colors_for_opponent_grid(hit_successful_indexes[0], row, column)
+        self.update_instructions("wait for your turn")
+        self.update()
+        time.sleep(1)
         self.game_over = hit_successful_indexes[1]
-        self.update_instructions("")
         if self.game_over:
             self.send_game_over()
             return
@@ -265,6 +268,8 @@ class client_window(tk.Tk):
             return
         self.turn = True
         self.update_instructions("Your turn, select opponent battleship location")
+        self.update()
+        time.sleep(1)
         self.deiconify()
 
     def check_opponent_move(self, row, column):
@@ -305,6 +310,7 @@ class client_window(tk.Tk):
         :return: void
         """
         self.update_instructions("You win!!!")
+        self.update()
         self.send_and_receive(GAME_OVER)
         self.log.close()
         time.sleep(5)
@@ -337,10 +343,11 @@ class client_window(tk.Tk):
         sends a disconnect message and destroys the window
         :return: void
         """
-        self.write_to_log("disable")
-        self.send_and_receive(DISCONNECT_MESSAGE)
-        self.log.close()
-        self.destroy()
+        if not self.game_over:
+            self.write_to_log("disable")
+            self.log.close()
+            self.send_and_receive(DISCONNECT_MESSAGE)
+            self.destroy()
 
 
 app = client_window()
