@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -293,10 +294,11 @@ class client_window(tk.Tk):
         sends to server that the game is over and destroys the window
         :return: void
         """
+        self.update_instructions("You win!!!")
         self.send_and_receive(GAME_OVER)
         self.log.close()
-        self.update_instructions("You win!!!")
-        #self.destroy()
+        time.sleep(5)
+        self.destroy()
 
     def create_ships(self):
         """
