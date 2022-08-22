@@ -26,6 +26,7 @@ class Server:
     """
     Server represents a server with it's management functions
     """
+
     def __init__(self):
         """
         init of a server
@@ -37,7 +38,7 @@ class Server:
         self.board_size = 10
         self.player1_board = [[]]
         self.player1_ships = []
-        self.ships_sizes = [XL_SHIP, L_SHIP, L_SHIP, M_SHIP, M_SHIP, M_SHIP, S_SHIP, S_SHIP, S_SHIP, S_SHIP]
+        self.ships_sizes = [S_SHIP, S_SHIP]
         self.client = "Client.py"
         self.player_1_name = ""
         self.player_2_name = ""
@@ -103,6 +104,9 @@ class Server:
         creates two clients and starts them
         :return: void
         """
+        self.asked_for_turn_first_time = False
+        self.player_1_turn = True
+        self.player_2_turn = False
         get_names_window = first_window()
         get_names_window.mainloop()
         self.player_1_name = get_names_window.get_player_1_name()
