@@ -22,7 +22,7 @@ class first_window(tk.Tk):
         self.player_2_name = tk.StringVar()
 
         # Error label
-        self.error_label = ttk.Label(self, text="At least one character needed", foreground='red')
+        self.error_label = ttk.Label(self, text="invalid input", foreground='red')
         self.create_widgets()
 
     def create_widgets(self):
@@ -58,7 +58,7 @@ class first_window(tk.Tk):
         """
         player_one_name = player_one_entry.get()
         player_two_name = player_two_entry.get()
-        if len(player_one_name) != 0 and len(player_two_name) != 0:
+        if len(player_one_name) != 0 and len(player_two_name) != 0 and player_one_name != player_two_name:
             self.player_1_name = player_one_name
             self.player_2_name = player_two_name
             self.destroy()
