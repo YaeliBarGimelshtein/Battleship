@@ -174,12 +174,13 @@ class Server:
 
     def try_place_ship(self, location, size, board, ships):
         """
-        RAN EXPLAIN
-        :param location:
-        :param size:
-        :param board:
-        :param ships:
-        :return:
+        Trying to place a ship on the board at a given location in a random direction. If the ship doesn't fit, we try
+        to rotate it in all other directions until it fits or tried every direction.
+        :param location: tuple
+        :param size: int
+        :param board: matrix
+        :param ships: list
+        :return: True in case the placement succeeds, otherwise False.
         """
         start_x, end_x, start_y, end_y = location[0], location[0], location[1], location[1]
         direction = random.randint(0, 3)
@@ -238,14 +239,15 @@ class Server:
 
     def is_valid_location(self, start_x, end_x, start_y, end_y, board, ships):
         """
-        checks if location for ship is valid ---> RAN EXPLAIN
-        :param start_x:
-        :param end_x:
-        :param start_y:
-        :param end_y:
-        :param board:
-        :param ships:
-        :return:
+        Checks whether a ship can be place in a given indexes. A valid location is one that is in the board boundaries
+        AND does not overlaps another ship.
+        :param start_x: int
+        :param end_x:int
+        :param start_y:int
+        :param end_y:int
+        :param board:matrix
+        :param ships:list
+        :return: True, in case the location is valid, otherwise False
         """
         for x in range(start_x, end_x + 1):  # run over the location and check if has ships
             for y in range(start_y, end_y + 1):
@@ -270,10 +272,11 @@ class Server:
 
     def pass_msg(self, port, msg):
         """
-        updates relevant data regrdings messages server got --> RAN EXPLAIN
-        :param port:
-        :param msg:
-        :return:
+        Passes a message from one client (player) to the other. The function determines the port of the other client and
+        passes the massage to it as is.
+        :param port: port of the sending client
+        :param msg: the massage
+        :return: void
         """
         if msg == TRY_HIT_MESSAGE:
             if self.player_1_turn:
@@ -307,7 +310,7 @@ class Server:
         else:
             winner = self.player_1_name
         self.write_to_log("Server got game over! winner is:" + winner)
-        last_window = Last_window(winner, self)
+        last_window = Last_window(winner, self, port)
         last_window.mainloop()
 
     def restart(self, port):

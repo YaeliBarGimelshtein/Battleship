@@ -84,7 +84,7 @@ class first_window(tk.Tk):
 
 
 class Last_window(tk.Tk):
-    def __init__(self, winner_name, server):
+    def __init__(self, winner_name, server,port):
         super().__init__()
 
         self.geometry("240x100")
@@ -98,6 +98,7 @@ class Last_window(tk.Tk):
         self.columnconfigure(1, weight=2)
         self.winner_name = winner_name
         self.server = server
+        self.port_to_send = port
         self.create_widgets(self.winner_name)
         self.deiconify()
 
@@ -120,7 +121,7 @@ class Last_window(tk.Tk):
 
     def replay(self):
         self.destroy()
-        self.server.restart()
+        self.server.restart(self.port_to_send)
 
     def disable_event(self):
         raise SystemExit

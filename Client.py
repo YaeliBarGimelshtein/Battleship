@@ -312,7 +312,6 @@ class client_window(tk.Tk):
         self.update_instructions("You win!!!")
         self.update()
         self.send_and_receive(GAME_OVER)
-        self.log.close()
         self.destroy()
 
     def create_ships(self):
@@ -344,8 +343,8 @@ class client_window(tk.Tk):
         """
         if not self.game_over:
             self.write_to_log("disable")
-            self.log.close()
             self.send_and_receive(DISCONNECT_MESSAGE)
+            self.log.close()
             self.destroy()
 
 
