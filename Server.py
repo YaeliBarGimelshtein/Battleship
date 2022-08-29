@@ -69,6 +69,9 @@ class Server:
         except ConnectionAbortedError:
             self.log.close()
             raise SystemExit
+        except ConnectionResetError:
+            self.log.close()
+            raise SystemExit
 
     def receive_massage(self, size, port):
         """
@@ -365,8 +368,8 @@ class Server:
             subprocess.Popen('taskkill /F /PID {0}'.format(self.player2_pid), shell=True)
         else:
             subprocess.Popen('taskkill /F /PID {0}'.format(self.player1_pid), shell=True)
-        self.player1_port.close()
         self.player2_port.close()
+        self.player1_port.close()
 
     def write_to_log(self, msg):
         """

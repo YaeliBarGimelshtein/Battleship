@@ -26,6 +26,9 @@ class client_window(tk.Tk):
 
         # client information
         self.args = sys.argv
+        if len(self.args) == 1:
+            print("No names given, can't run client")
+            raise SystemExit
         self.my_name = self.args[1]
         self.opponent_name = self.args[2]
         self.log = open(self.my_name + "_log.txt", "a")
@@ -57,6 +60,10 @@ class client_window(tk.Tk):
             self.wait_for_move()
 
     def set_geometry(self):
+        """
+        gets screen size and set location of window in the screen
+        :return: width, height of screen and where the window needs to start
+        """
         width = 1000
         height = 500
         screen_width = self.winfo_screenwidth()
