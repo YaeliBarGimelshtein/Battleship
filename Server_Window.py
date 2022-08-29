@@ -22,7 +22,9 @@ class first_window(tk.Tk):
         self.player_2_name = tk.StringVar()
 
         # Error label
-        self.error_label = ttk.Label(self, text="invalid input", foreground='red')
+        self.error = tk.StringVar()
+        self.error_label = ttk.Label(self, textvariable=self.error, foreground="red",)
+        self.error_label.grid(column=0, row=3, sticky=tk.E, padx=5, pady=5)
         self.create_widgets()
 
     def create_widgets(self):
@@ -58,12 +60,16 @@ class first_window(tk.Tk):
         """
         player_one_name = player_one_entry.get()
         player_two_name = player_two_entry.get()
-        if len(player_one_name) != 0 and len(player_two_name) != 0 and player_one_name != player_two_name:
+        if len(player_one_name) == 0 or len(player_two_name) == 0:
+            self.error.set("At least one character needed")
+            self.update()
+        elif player_one_name == player_two_name:
+            self.error.set("Cant have same name")
+            self.update()
+        else:
             self.player_1_name = player_one_name
             self.player_2_name = player_two_name
             self.destroy()
-        else:
-            self.error_label.grid(column=0, row=3, sticky=tk.E, padx=5, pady=5)
 
     def get_player_1_name(self):
         """
