@@ -28,7 +28,7 @@ class client_window(tk.Tk):
         self.args = sys.argv
         self.my_name = self.args[1]
         self.opponent_name = self.args[2]
-        self.log = open(self.my_name + "_log.txt", "w")
+        self.log = open(self.my_name + "_log.txt", "a")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ships = []
         self.game_over = False
